@@ -24,7 +24,7 @@ def create_app(reasoner: Reasoner | None = None) -> FastAPI:
 
     application = FastAPI(
         title="Supply Chain Exception Resolution Agent",
-        version="0.2.0",
+        version="0.3.0",
         description="Evidence-referenced recommendations with deterministic or Azure reasoning",
         lifespan=lifespan,
     )

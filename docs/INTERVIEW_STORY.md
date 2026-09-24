@@ -9,8 +9,8 @@ the same context. Structured output and evidence-reference checks validate the r
 trace explains which evidence and provider were used.
 
 The current version proposes actions only. Approval flags are advisory; authenticated approvals
-and deterministic execution are later roadmap stages. I can compare the providers on six cases,
-including negation, conflicting evidence and instructions embedded in notes.
+and deterministic execution are later roadmap stages. I can evaluate the fixed providers on 30
+synthetic cases, including negation, conflicting evidence and instructions embedded in notes.
 
 ## What the implementation demonstrates
 
@@ -19,13 +19,15 @@ including negation, conflicting evidence and instructions embedded in notes.
 - A direct Azure provider with structured output and explicit failure handling.
 - Canonical evidence references and traceable runs.
 - Repeatable comparisons that retain model failures and known baseline limitations.
+- Evaluation with automatic operational metrics and structured human review for semantic quality,
+  including explicit coverage when reviews, usage, or pricing are missing.
 
-Mocked provider tests validate integration behaviour, not model quality. A live Azure comparison
-must be run before reporting model-quality results. Valid citations alone do not prove every
-claim is supported.
+Mocked provider tests validate integration behaviour, not model quality. A live Azure evaluation
+and actual semantic review are needed before reporting Azure quality results. Valid citations alone
+do not prove every claim is supported. The included baseline report leaves human reviews pending.
 
 ## Next engineering steps
 
-Formal evaluation comes in v0.3, enterprise tools and resilience in v0.4, identity and enforced
+Enterprise tools and resilience come in v0.4, identity and enforced
 write approval in v0.5, and deployment infrastructure in v0.6. UiPath could eventually submit
 qualified exceptions and execute explicitly authorized actions through a deterministic contract.

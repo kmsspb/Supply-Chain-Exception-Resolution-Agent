@@ -38,7 +38,7 @@ def test_existing_routes_and_run_filter():
         assert completed == ["get_erp_order", "get_logistics_status", "get_shipment_note"]
         assert all("elapsed_ms" in event["details"] for event in events if event["event_type"] == "connector_completed")
         schema = client.get("/openapi.json").json()
-        assert schema["info"]["version"] == "0.2.0"
+        assert schema["info"]["version"] == "0.3.0"
         assert "ResolutionRecommendation" in schema["paths"]["/exceptions/{exception_id}/resolve"]["post"]["responses"]["200"]["content"]["application/json"]["schema"]["$ref"]
 
 

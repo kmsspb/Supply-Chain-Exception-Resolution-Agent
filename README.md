@@ -3,7 +3,7 @@
 A portfolio demonstrator for hybrid enterprise automation: deterministic context collection,
 replaceable reasoning, evidence references, and traceable recommendations.
 
-**v0.2 is recommendation-only.** It offers the original deterministic baseline and a direct
+**v0.3 is recommendation-only.** It offers the original deterministic baseline and a direct
 Azure OpenAI model integration. Neither provider changes ERP records, sends messages, approves
 actions, or resolves stored exception status. The approval flag is advisory.
 
@@ -122,8 +122,37 @@ Exit code 0 does not imply the recommendations match expected outcomes.
 
 Expected actions describe reviewer expectations, not an automatic semantic grader. Known baseline
 errors on negation and contradictory notes are preserved so comparisons remain honest. A completed
-baseline-only report does not validate Azure model quality. Formal scoring, cost calculation, and
-the 20–50-case evaluation dataset belong to v0.3.
+baseline-only report does not validate Azure model quality. The original six-case comparison
+remains available; use the v0.3 evaluation workflow below for scoring and cost estimates.
+
+## Evaluate 30 cases
+
+The versioned dataset contains five examples in each existing scenario family, including the
+six original seeds and 24 new cases. Both reasoners and the Azure prompt remain fixed.
+
+```powershell
+python -m app.evaluate run --provider rule_based --output-dir evaluation-results/baseline
+python -m app.evaluate run --provider both --output-dir evaluation-results/both
+```
+
+Each new output directory receives `results.json`, `summary.md`, and `review-template.json`.
+Classification, latency, token counts, and available cost estimates are automatic. Action
+correctness, unsupported claims, and escalation meaning use structured human review. Pending
+reviews are shown as unavailable, with coverage; they are not silently scored as correct.
+
+Copy the blank template to `reviews.json`, record actual human judgements with reviewer identity,
+timestamp, rationale, and evidence, then rescore without making model calls:
+
+```powershell
+python -m app.evaluate score --results evaluation-results/baseline/results.json --reviews reviews.json --output-dir evaluation-results/baseline-reviewed
+```
+
+Both commands accept `--pricing <file>` for sourced, dated deployment rates. Start with
+`data/pricing.example.json`, which contains no real prices. Missing usage or prices produce
+unavailable costs; unknown failed requests are not free. Existing output artifacts are not overwritten.
+
+See [the evaluation guide](docs/EVALUATION.md) for metric definitions, review format, pricing,
+dataset provenance, report hashes, and interpretation limits.
 
 ## Tracing and boundaries
 
@@ -149,14 +178,14 @@ python -m pytest tests -q
 
 Offline tests use mocked HTTP transport with the real OpenAI SDK. They cover parsing, the Azure
 schema subset, local validation, provider failures, safe errors, configuration, API compatibility,
-trace correlation/concurrency, and comparison behaviour. They require no Azure credentials.
-Live verification is separate: configure Azure, resolve `EX-001`, then run the six-case comparison
-and inspect recommendations against expectations. Do not interpret mocked outputs as model evaluation.
+trace correlation/concurrency, comparison compatibility, and evaluation calculations/review validation.
+They require no Azure credentials. Live verification is separate: configure Azure, resolve
+`EX-001`, then run the 30-case evaluation and review its outputs. Mocked tests do not measure model quality.
 
 ## Roadmap
 
 - **v0.2:** Direct Azure reasoning, structured output, evidence reference validation, prompt/connector tracing, small baseline comparisons.
-- **v0.3:** 20–50 evaluation cases; classification, action, unsupported-claim, escalation, latency, token/cost metrics.
+- **v0.3:** 30 evaluation cases; classification, human-reviewed action/claim/escalation scoring, latency, token/cost estimates with coverage.
 - **v0.4:** Enterprise tool exposure, MCP exploration, retries/timeouts/circuit breakers, action idempotency.
 - **v0.5:** Entra ID, agent identity and least privilege, read/write separation, enforced approval policies, immutable audit.
 - **v0.6:** CI/CD, containers, deployment configuration/secrets management, deployment architecture.

@@ -1,4 +1,4 @@
-# Architecture — v0.2
+# Architecture — v0.3
 
 ## Implemented request flow
 
@@ -40,8 +40,8 @@ closed at shutdown. Tests can inject a reasoner using the application factory.
   transition, approval persistence, message sending, or ERP mutation is implemented.
 
 Reference integrity does not establish semantic entailment. Even a valid response can misinterpret
-facts or recommend an unsuitable action. The comparison fixtures expose this limitation; formal
-unsupported-claim evaluation belongs to v0.3. Carrier notes are treated as untrusted evidence in
+facts or recommend an unsuitable action. Evaluation uses human review to assess unsupported
+claims separately from citation validity. Carrier notes are treated as untrusted evidence in
 the prompt; this is not a claim of complete prompt-injection resistance.
 
 ## Failures
@@ -69,12 +69,33 @@ unbounded, and not immutable. No production audit guarantees are claimed.
 The comparison CLI creates each of six context snapshots once and passes it to both providers.
 It records separate run IDs, reviewer expectations, recommendations/errors, elapsed times, model
 metadata, and run traces in JSON. Comparison runs use preloaded fixture contexts, so they have
-no connector-call events: no connector calls occurred during those runs. No semantic grading or
-cost estimates are performed in v0.2.
+no connector-call events: no connector calls occurred during those runs. This six-case compatibility
+workflow stays unscored; v0.3 evaluation is a separate CLI using the same execution helper.
+
+## Evaluation workflow
+
+`app.evaluate run` validates a versioned 30-case dataset before constructing providers. It builds
+source contexts without ground-truth annotations, runs the unchanged reasoners, and snapshots
+results, metadata, traces, dataset/context/output hashes, and annotations for reproducible scoring.
+
+Deterministic metrics measure category matches, latency, token usage and supported cost estimates.
+The scorer imports explicit human judgements for action meaning, unsupported claims, and manual
+escalation. The approval flag is not an escalation prediction. All metrics expose denominators,
+review/usage coverage, and unavailable values. Provider failures stay in all-attempt denominators.
+
+`app.evaluate score` reuses saved results and makes no model calls. Reviews are bound to exact
+case/provider/run/output hashes. Pricing is an explicit, dated deployment profile snapshotted
+into the report; missing or unsupported pricing produces unknown costs, not zero. Results are
+JSON/Markdown artifacts in a new directory, not a new database or serving endpoint.
+
+The new evaluation dataset, review validation, metrics, pricing and reporting code lives under
+`app/evaluation`. Production reasoning and policy do not depend on it. See [EVALUATION.md](EVALUATION.md)
+for formulas and review responsibilities. Hashes detect mismatches; they do not authenticate reviewers
+or provide immutable audit guarantees.
 
 ## Future boundaries
 
-v0.3 adds a larger evaluation dataset and metrics. v0.4 introduces enterprise tool access,
+v0.4 introduces enterprise tool access,
 MCP exploration and action resilience. v0.5 provides identity, enforced write approvals and
 immutable audit. v0.6 covers delivery infrastructure. These stages must preserve the separation
 between reasoning and authorized deterministic execution.

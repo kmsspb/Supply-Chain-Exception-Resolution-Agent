@@ -1,0 +1,14 @@
+{
+  "profiles": [
+    {
+      "provider": "azure_openai",
+      "deployment": "YOUR-DEPLOYMENT-NAME",
+      "currency": "USD",
+      "effective_date": "2026-09-24",
+      "source": "REPLACE with your pricing source and billing context; no real rates are supplied",
+      "input_per_million": null,
+      "cached_input_per_million": null,
+      "output_per_million": null
+    }
+  ]
+}
