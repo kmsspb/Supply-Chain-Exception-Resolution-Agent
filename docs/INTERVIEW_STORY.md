@@ -2,24 +2,30 @@
 
 ## 30-second explanation
 
-I built this project to explore how an established enterprise RPA landscape can evolve toward agentic automation without replacing reliable deterministic workflows.
+I built a supply-chain exception recommendation service to explore how existing RPA workflows
+can use model reasoning for ambiguous cases. The orchestrator collects synthetic ERP, logistics,
+and carrier-note evidence. Either a deterministic baseline or an Azure OpenAI deployment analyses
+the same context. Structured output and evidence-reference checks validate the result, and a run
+trace explains which evidence and provider were used.
 
-The example is a supply-chain exception. Deterministic logic detects the exception. An agent collects evidence from mock ERP, logistics and unstructured communication sources, reasons about the likely root cause and proposes an action. A human approval boundary protects material actions, and every step is auditable.
+The current version proposes actions only. Approval flags are advisory; authenticated approvals
+and deterministic execution are later roadmap stages. I can compare the providers on six cases,
+including negation, conflicting evidence and instructions embedded in notes.
 
-The initial version deliberately separates orchestration, tools and reasoning so I can replace the deterministic reasoner with Azure AI Foundry or another agent framework without redesigning the workflow.
+## What the implementation demonstrates
 
-## Key point
+- Separation of API, orchestration, read tools, reasoning and output validation.
+- A local baseline that needs no cloud credentials.
+- A direct Azure provider with structured output and explicit failure handling.
+- Canonical evidence references and traceable runs.
+- Repeatable comparisons that retain model failures and known baseline limitations.
 
-The project is about architecture and operational discipline, not a chatbot demo.
+Mocked provider tests validate integration behaviour, not model quality. A live Azure comparison
+must be run before reporting model-quality results. Valid citations alone do not prove every
+claim is supported.
 
-## Questions to be ready for
+## Next engineering steps
 
-- Why should this step use an LLM instead of rules?
-- What happens when confidence is low?
-- What can the agent read?
-- What can the agent write?
-- Where is the human approval?
-- How would UiPath participate?
-- How do you evaluate whether the agent is improving?
-- How do you protect secrets and identities?
-- How would you trace an incorrect recommendation?
+Formal evaluation comes in v0.3, enterprise tools and resilience in v0.4, identity and enforced
+write approval in v0.5, and deployment infrastructure in v0.6. UiPath could eventually submit
+qualified exceptions and execute explicitly authorized actions through a deterministic contract.

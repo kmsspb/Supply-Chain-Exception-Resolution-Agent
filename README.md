@@ -1,156 +1,164 @@
 # Supply Chain Exception Resolution Agent
 
-A portfolio demonstrator for **hybrid intelligent automation**: deterministic workflow + AI reasoning + enterprise tools + human approval + auditability.
+A portfolio demonstrator for hybrid enterprise automation: deterministic context collection,
+replaceable reasoning, evidence references, and traceable recommendations.
 
-## Why this project exists
-
-Mature automation estates already handle deterministic work well. AI agents are most valuable where a process contains ambiguity, unstructured information, exception reasoning, or a need to choose among several next actions.
-
-This project demonstrates how to **add agentic capability without replacing reliable automation unnecessarily**.
-
-The fictional scenario is a logistics exception:
-- an ERP sales/order record says a shipment should already be progressing;
-- logistics data reports a delay or inconsistent ETA;
-- a supplier/carrier note contains unstructured context;
-- an agent gathers evidence and proposes the most likely cause and next action;
-- high-impact actions require a human approval;
-- all tool calls, evidence and decisions are logged.
-
-## What this should prove in an interview
-
-1. You understand **RPA vs agentic AI vs hybrid automation**.
-2. You can design **tool-based agents** around enterprise systems.
-3. You understand **REST/JSON/Python integration patterns**.
-4. You design for **human-in-the-loop, auditability, monitoring and failure handling**.
-5. You can explain how the pattern could integrate with an existing RPA estate such as UiPath.
-6. You know that an LLM should not be allowed to mutate enterprise systems without controls.
-
-## MVP architecture
-
-```text
-Exception event
-     |
-     v
-Deterministic intake / validation
-     |
-     v
-Exception Resolution Orchestrator
-     |
-     +------> ERP Tool (mock REST/data)
-     +------> Logistics Tool (mock REST/data)
-     +------> Communication Tool (mock unstructured note)
-     |
-     v
-Agent reasoning / recommendation
-     |
-     +------ low-risk -> recommended next step
-     |
-     +------ high-risk -> Human approval
-                            |
-                            v
-                    Deterministic action
-                            |
-                            v
-                       Audit event
-```
-
-The initial version deliberately uses a **rule-based reasoning stub** instead of an external LLM. This keeps the project runnable without secrets and lets us first prove the workflow, tool contracts, guardrails and audit model. A real Azure/OpenAI agent will be added later behind the same interface.
+**v0.2 is recommendation-only.** It offers the original deterministic baseline and a direct
+Azure OpenAI model integration. Neither provider changes ERP records, sends messages, approves
+actions, or resolves stored exception status. The approval flag is advisory.
 
 ## Scenario
 
-Order `SO-1001` is expected at the customer on 2026-09-25.
+For fictional Nordic Marine Components, an order is due on 2026-09-25, the carrier reports
+2026-09-28, and a note describes an incomplete customs invoice. Local synthetic JSON records
+stand in for ERP, logistics, and communication systems.
 
-The ERP record looks normal, but the carrier reports an ETA of 2026-09-28. A supplier/carrier note says the shipment was held because customs documentation was incomplete.
-
-The system should:
-1. validate the exception;
-2. collect evidence from ERP, shipment tracking and notes;
-3. classify the exception;
-4. produce an evidence-backed recommendation;
-5. decide whether human approval is required;
-6. log what happened.
+The baseline uses the original keyword rule and fixed confidence values. The Azure provider
+receives the same context and must return structured recommendations with references to
+application-owned evidence. Citation validation proves references exist, **not** that all
+claims are semantically supported. Compare the actual outputs before claiming model improvement.
 
 ## Quick start
 
-Requires Python 3.11+.
-
-```bash
-python -m venv .venv
-```
-
-Windows:
+Requires Python 3.11+. Windows PowerShell:
 
 ```powershell
-.venv\Scripts\activate
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m uvicorn app.main:app --reload
 ```
 
-macOS/Linux:
-
-```bash
-source .venv/bin/activate
-```
-
-Install:
-
-```bash
-pip install -r requirements.txt
-```
-
-Run:
-
-```bash
-uvicorn app.main:app --reload
-```
-
-Open:
+On macOS/Linux, activate with `source .venv/bin/activate`.
+The default `rule_based` provider runs without Azure credentials.
 
 - Swagger: http://127.0.0.1:8000/docs
 - Health: http://127.0.0.1:8000/health
 
-Resolve the sample exception:
-
-```bash
-curl -X POST http://127.0.0.1:8000/exceptions/EX-001/resolve
+```powershell
+curl.exe -X POST http://127.0.0.1:8000/exceptions/EX-001/resolve
 ```
 
-## Development roadmap
+PowerShell-native example:
 
-### Phase 1 — deterministic skeleton
-- [x] Exception model
-- [x] Mock ERP/logistics/notes data
-- [x] Tool interfaces
-- [x] Rule-based reasoning stub
-- [x] Human-approval decision
-- [x] Audit trail
-- [x] REST API
+```powershell
+$result = Invoke-RestMethod -Method Post http://127.0.0.1:8000/exceptions/EX-001/resolve
+$result | ConvertTo-Json -Depth 10
+Invoke-RestMethod "http://127.0.0.1:8000/exceptions/EX-001/audit?run_id=$($result.run_id)"
+```
 
-### Phase 2 — real LLM/tool calling
-- [ ] Add `AgentReasoner` interface
-- [ ] Azure OpenAI / Azure AI Foundry implementation
-- [ ] Structured JSON output
-- [ ] Tool/function calling
-- [ ] Prompt versioning
-- [ ] Grounded evidence citations in agent output
+## Enable Azure reasoning
 
-### Phase 3 — enterprise-grade controls
-- [ ] Entra ID concept
-- [ ] secrets via Key Vault
-- [ ] confidence / risk thresholds
-- [ ] PII/data-access controls
-- [ ] evaluation dataset
-- [ ] tracing and metrics
-- [ ] retry/idempotency patterns
-- [ ] approval persistence
+Copy `.env.example` to `.env`, then set:
 
-### Phase 4 — RPA integration
-- [ ] Define UiPath-facing REST contract
-- [ ] RPA invokes agent only for qualified exceptions
-- [ ] Agent returns recommendation + required action
-- [ ] UiPath executes approved deterministic action
-- [ ] common audit correlation ID
+```dotenv
+REASONER_PROVIDER=azure_openai
+AZURE_OPENAI_BASE_URL=https://YOUR-RESOURCE.openai.azure.com/openai/v1/
+AZURE_OPENAI_API_KEY=your-local-key
+AZURE_OPENAI_DEPLOYMENT=your-deployment-name
+AZURE_OPENAI_TIMEOUT_SECONDS=30
+AZURE_OPENAI_MAX_OUTPUT_TOKENS=4096
+```
 
-## Design principle
+Use an existing deployment that supports the Responses API and structured outputs. The
+deployment name is passed as `model`; this is not a Foundry project/agent endpoint.
+No Azure resources are provisioned by this application. Follow Microsoft's
+[structured-output setup](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/structured-outputs).
 
-> **Keep deterministic work deterministic. Use the agent for ambiguity and reasoning. Require a human where the consequence of a wrong action is material.**
+Environment variables take precedence over the optional repository-root `.env`.
+Restart the application after changing provider configuration. Azure configuration is checked
+at startup only when Azure is selected. The baseline ignores incomplete Azure settings.
 
-That principle is the core of this portfolio project.
+The SDK has zero automatic retries and an explicit request timeout. The configured timeout is
+an SDK request/I/O timeout, not a distributed workflow deadline. Provider errors never cause a
+baseline fallback. Secrets stay out of source control; do not place real keys in `.env.example`.
+
+## API contract
+
+| Endpoint | Behaviour |
+| --- | --- |
+| `GET /health` | Process health; does not probe Azure |
+| `POST /exceptions/{exception_id}/resolve` | Collect context and return a recommendation |
+| `GET /exceptions/{exception_id}/audit?run_id=...` | Retrieve events for an exception, optionally one run |
+
+All original recommendation fields remain. Responses add `run_id`, `provider`,
+`cause_evidence_ids`, and `action_evidence_ids`; each evidence item adds `evidence_id`.
+The `X-Run-ID` response header matches the body, including handled analysis errors.
+Evidence facts are canonical JSON representations of retrieved records, constructed by the
+application rather than copied from model-generated prose.
+
+Handled errors use:
+`{"detail": {"code": "...", "message": "...", "run_id": "..."}}`.
+
+| HTTP status | Meaning |
+| --- | --- |
+| 404 | Exception does not exist |
+| 422 | Required supporting record is unavailable |
+| 500 | Corrupt local data or unexpected internal failure |
+| 502 | Invalid output/citations, model refusal, or incomplete model response |
+| 503 | Provider unavailable, including authentication and throttling failures |
+| 504 | Provider timeout |
+
+Recommendations do not mutate business state. Calling resolve again creates a new analysis run.
+There is no approval endpoint, exception intake endpoint, or action executor.
+
+## Compare providers
+
+Six fixtures cover missing documents, completed documents/negation, weather delay, insufficient
+information, conflicting sources, and instructions embedded in a carrier note.
+
+```powershell
+python -m app.compare --provider rule_based --output comparison-results/baseline.json
+python -m app.compare --provider azure_openai --output comparison-results/azure.json
+python -m app.compare --provider both --output comparison-results/both.json
+```
+
+The CLI provider selection overrides `REASONER_PROVIDER`. In `both` mode, each fixture is
+loaded once and the identical context snapshot is supplied to both providers. Reports include
+expected outcomes, recommendations, evidence citations, run traces, elapsed time, and available
+model/token metadata. Failures remain explicit errors, with no substituted recommendation.
+Exit codes: 0 = all runs completed; 1 = one or more provider errors; 2 = fixture/report I/O error.
+Exit code 0 does not imply the recommendations match expected outcomes.
+
+Expected actions describe reviewer expectations, not an automatic semantic grader. Known baseline
+errors on negation and contradictory notes are preserved so comparisons remain honest. A completed
+baseline-only report does not validate Azure model quality. Formal scoring, cost calculation, and
+the 20–50-case evaluation dataset belong to v0.3.
+
+## Tracing and boundaries
+
+Every run has a UUID and increasing event sequence numbers. Traces record run start, connector
+calls, the supplied synthetic context, prompt version/hash, deployment, returned model/response
+IDs, available token usage, validation outcomes, timings, and terminal success/failure.
+Only validated recommendations are stored as recommendation events. Raw SDK error bodies,
+credentials, request headers, and hidden model reasoning are excluded.
+
+The prompt lives in `app/prompts/resolution_v1.txt`. Its hash identifies the exact text, while
+context snapshots identify the evidence supplied. Connector events describe calls made by the
+orchestrator; the model does not invoke tools.
+
+**Traces are process-local, unauthenticated, and not immutable.** Restarting loses them; workers
+have separate stores; memory usage grows with runs. This is a synthetic-data local demo, not a
+production governance store. JSON comparison reports are local exports of those runs.
+
+## Tests
+
+```powershell
+python -m pytest tests -q
+```
+
+Offline tests use mocked HTTP transport with the real OpenAI SDK. They cover parsing, the Azure
+schema subset, local validation, provider failures, safe errors, configuration, API compatibility,
+trace correlation/concurrency, and comparison behaviour. They require no Azure credentials.
+Live verification is separate: configure Azure, resolve `EX-001`, then run the six-case comparison
+and inspect recommendations against expectations. Do not interpret mocked outputs as model evaluation.
+
+## Roadmap
+
+- **v0.2:** Direct Azure reasoning, structured output, evidence reference validation, prompt/connector tracing, small baseline comparisons.
+- **v0.3:** 20–50 evaluation cases; classification, action, unsupported-claim, escalation, latency, token/cost metrics.
+- **v0.4:** Enterprise tool exposure, MCP exploration, retries/timeouts/circuit breakers, action idempotency.
+- **v0.5:** Entra ID, agent identity and least privilege, read/write separation, enforced approval policies, immutable audit.
+- **v0.6:** CI/CD, containers, deployment configuration/secrets management, deployment architecture.
+
+See [architecture](docs/ARCHITECTURE.md) and [interview narrative](docs/INTERVIEW_STORY.md).

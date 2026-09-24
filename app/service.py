@@ -1,42 +1,101 @@
+from collections.abc import Callable
+from time import perf_counter
+
 from app import repository, tools
-from app.audit import log_event
-from app.reasoner import RuleBasedReasoner
+from app.audit import RunTrace
+from app.context import build_context
+from app.errors import CorruptData, ExceptionNotFound, ResolutionError
+from app.models import ReasoningContext, ResolutionRecommendation
+from app.reasoner import Reasoner, create_reasoner
+from app.validation import validate_recommendation
 
-reasoner = RuleBasedReasoner()
+
+def _connector(trace: RunTrace, name: str, function: Callable, record_id: str) -> dict:
+    started = perf_counter()
+    trace.log("connector_started", tool=name, record_id=record_id)
+    try:
+        record = function(record_id)
+    except ResolutionError as exc:
+        trace.log(
+            "connector_failed", tool=name, error_code=exc.code,
+            elapsed_ms=round((perf_counter() - started) * 1000, 3),
+        )
+        raise
+    except Exception:
+        trace.log("connector_failed", tool=name, error_code="corrupt_local_data")
+        raise CorruptData() from None
+    trace.log(
+        "connector_completed", tool=name, record_id=record_id,
+        elapsed_ms=round((perf_counter() - started) * 1000, 3),
+    )
+    return record
 
 
-def resolve_exception(exception_id: str):
+def collect_context(exception_id: str, trace: RunTrace) -> ReasoningContext:
     exception = repository.get_exception(exception_id)
-    if not exception:
-        raise ValueError(f"Exception {exception_id} not found")
+    if exception is None:
+        raise ExceptionNotFound()
+    if any(
+        not isinstance(exception.get(key), str) or not exception[key].strip()
+        for key in ("order_id", "shipment_id")
+    ):
+        raise CorruptData()
+    order = _connector(trace, "get_erp_order", tools.get_erp_order, exception["order_id"])
+    shipment = _connector(trace, "get_logistics_status", tools.get_logistics_status, exception["shipment_id"])
+    note = _connector(trace, "get_shipment_note", tools.get_shipment_note, exception["shipment_id"])
+    return build_context(exception, order, shipment, note)
 
-    log_event("resolution_started", exception_id, {"order_id": exception["order_id"]})
 
-    order = tools.get_erp_order(exception["order_id"])
-    shipment = tools.get_logistics_status(exception["shipment_id"])
-    note = tools.get_shipment_note(exception["shipment_id"])
+def _execute(
+    exception_id: str, reasoner: Reasoner, loader: Callable[[RunTrace], ReasoningContext],
+) -> ResolutionRecommendation:
+    trace = RunTrace(exception_id, reasoner.provider)
+    trace.log("resolution_started")
+    try:
+        context = loader(trace)
+        trace.log("evidence_collected", context=context.model_dump(mode="json"))
+        trace.log("model_invoked", **reasoner.describe())
+        model_started = perf_counter()
+        try:
+            result = reasoner.resolve(context)
+        except ResolutionError as exc:
+            trace.log(
+                "model_failed", error_code=exc.code, metadata=exc.metadata,
+                elapsed_ms=round((perf_counter() - model_started) * 1000, 3),
+            )
+            if exc.status_code == 502:
+                trace.log("output_validation_failed", error_code=exc.code)
+            raise
+        trace.log(
+            "model_completed", metadata=result.metadata,
+            elapsed_ms=round((perf_counter() - model_started) * 1000, 3),
+        )
+        try:
+            recommendation = validate_recommendation(
+                result.recommendation, context, trace.run_id, reasoner.provider,
+            )
+        except ResolutionError as exc:
+            trace.log("output_validation_failed", error_code=exc.code)
+            raise
+        trace.log("output_validated")
+        trace.log("recommendation_created", recommendation=recommendation.model_dump(mode="json"))
+        trace.log("resolution_completed", elapsed_ms=trace.elapsed_ms)
+        return recommendation
+    except ResolutionError as exc:
+        error = exc
+    except Exception:
+        # Trace and return a safe error even for an unexpected adapter/programming failure.
+        error = ResolutionError()
+    error.run_id = trace.run_id
+    trace.log("resolution_failed", error_code=error.code, elapsed_ms=trace.elapsed_ms)
+    raise error from None
 
-    log_event(
-        "evidence_collected",
-        exception_id,
-        {
-            "erp_order": order["order_id"],
-            "shipment": shipment["shipment_id"],
-            "note": note["note_id"],
-        },
-    )
 
-    recommendation = reasoner.resolve(exception, order, shipment, note)
+def resolve_exception(exception_id: str, reasoner: Reasoner | None = None) -> ResolutionRecommendation:
+    selected = reasoner if reasoner is not None else create_reasoner()
+    return _execute(exception_id, selected, lambda trace: collect_context(exception_id, trace))
 
-    log_event(
-        "recommendation_created",
-        exception_id,
-        {
-            "category": recommendation.category,
-            "confidence": recommendation.confidence,
-            "risk_level": recommendation.risk_level,
-            "human_approval_required": recommendation.human_approval_required,
-        },
-    )
 
-    return recommendation
+def analyse_context(context: ReasoningContext, reasoner: Reasoner) -> ResolutionRecommendation:
+    """Analyse an already collected snapshot, used for fair provider comparisons."""
+    return _execute(context.exception["exception_id"], reasoner, lambda trace: context)

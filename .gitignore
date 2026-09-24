@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 notes.md
 .notes.md
+comparison-results/
