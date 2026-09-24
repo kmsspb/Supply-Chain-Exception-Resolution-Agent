@@ -1,0 +1,11 @@
+[
+  {
+    "order_id": "SO-1001",
+    "customer": "Nordic Marine Services",
+    "material": "Critical spare part",
+    "quantity": 2,
+    "requested_delivery_date": "2026-09-25",
+    "incoterm": "DAP",
+    "order_status": "released"
+  }
+]

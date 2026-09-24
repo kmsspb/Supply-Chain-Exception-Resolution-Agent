@@ -1,0 +1,9 @@
+[
+  {
+    "shipment_id": "SHP-9001",
+    "carrier": "Example Logistics",
+    "status": "customs_hold",
+    "current_eta": "2026-09-28",
+    "last_event": "Held at export customs"
+  }
+]

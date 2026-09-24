@@ -1,0 +1,9 @@
+[
+  {
+    "exception_id": "EX-001",
+    "order_id": "SO-1001",
+    "shipment_id": "SHP-9001",
+    "exception_type": "late_delivery",
+    "detected_at": "2026-09-24T08:15:00Z"
+  }
+]
