@@ -1,15 +1,21 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException, Request, Response
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.actions import ActionIntentService, ActionStore
 from app.audit import get_events
 from app.config import ActionSettings
 from app.connectors import ConnectorBundle, EnterpriseToolService, create_connector_bundle
 from app.errors import ResolutionError
-from app.models import ActionIntent, RequestDocumentInput, ResolutionRecommendation
+from app.models import ActionIntent, DemoStatus, RequestDocumentInput, ResolutionRecommendation
 from app.reasoner import Reasoner, create_reasoner
 from app.service import resolve_exception
+
+APP_VERSION = "0.4.0"
+DEMO_DIR = Path(__file__).resolve().parent / "demo"
 
 
 def create_app(
@@ -20,7 +26,10 @@ def create_app(
     @asynccontextmanager
     async def lifespan(application: FastAPI):
         selected = reasoner if reasoner is not None else create_reasoner()
-        bundle = ConnectorBundle(tool_service) if tool_service is not None else create_connector_bundle()
+        bundle = (
+            ConnectorBundle(tool_service, mode="injected")
+            if tool_service is not None else create_connector_bundle()
+        )
         store = action_store or ActionStore(ActionSettings.from_env().database_path)
         application.state.reasoner = selected
         application.state.connector_bundle = bundle
@@ -37,7 +46,7 @@ def create_app(
 
     application = FastAPI(
         title="Supply Chain Exception Resolution Agent",
-        version="0.4.0",
+        version=APP_VERSION,
         description="Evidence-referenced recommendations with resilient enterprise connectors",
         lifespan=lifespan,
     )
@@ -45,6 +54,18 @@ def create_app(
     @application.get("/health")
     def health():
         return {"status": "ok"}
+
+    @application.get("/demo", include_in_schema=False)
+    def demo():
+        return FileResponse(DEMO_DIR / "index.html", media_type="text/html")
+
+    @application.get("/demo/status", response_model=DemoStatus)
+    def demo_status(request: Request):
+        return DemoStatus(
+            version=APP_VERSION,
+            reasoner_provider=request.app.state.reasoner.provider,
+            connector_mode=request.app.state.connector_bundle.mode,
+        )
 
     @application.post("/exceptions/{exception_id}/resolve", response_model=ResolutionRecommendation)
     def resolve(exception_id: str, request: Request, response: Response):
@@ -90,6 +111,7 @@ def create_app(
                 detail={"code": exc.code, "message": exc.message, "run_id": exc.run_id},
             ) from None
 
+    application.mount("/demo/assets", StaticFiles(directory=DEMO_DIR), name="demo-assets")
     return application
 
 

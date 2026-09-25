@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Guided supply-chain exception resolution demonstration">
+  <title>Supply Chain Exception Agent — Guided Demo</title>
+  <link rel="icon" href="/demo/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/demo/assets/styles.css">
+  <script src="/demo/assets/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="topbar">
+    <a class="brand" href="/demo" aria-label="Supply Chain Exception Agent demo home">
+      <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span><strong>Supply Chain</strong><small>Exception Agent</small></span>
+    </a>
+    <div class="system-badges" id="system-badges" aria-label="Demo environment">
+      <span class="badge badge-neutral">Loading system status…</span>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Demo sections" role="tablist">
+    <button id="workflow-tab" role="tab" aria-selected="true" aria-controls="workflow-panel" tabindex="0">
+      Guided workflow
+    </button>
+    <button id="architecture-tab" role="tab" aria-selected="false" aria-controls="architecture-panel" tabindex="-1">
+      Architecture &amp; real-world path
+    </button>
+  </nav>
+
+  <main id="main-content">
+    <section id="workflow-panel" class="tab-panel" role="tabpanel" aria-labelledby="workflow-tab">
+      <div class="hero shell">
+        <div class="hero-copy">
+          <p class="eyebrow">Guided business demonstration</p>
+          <h1>Resolve a late shipment with evidence you can verify.</h1>
+          <p class="hero-lead">
+            Follow one operational exception from enterprise records to a grounded recommendation
+            and a safely recorded action intent.
+          </p>
+          <div class="boundary-note">
+            <span aria-hidden="true">◈</span>
+            <p><strong>Safe demonstration.</strong> The default uses synthetic records. Recording an
+              action creates a local intent only—it never sends a message or changes ERP data.</p>
+          </div>
+        </div>
+        <article class="exception-card" aria-labelledby="case-title">
+          <div class="card-topline">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span>Open exception</span>
+            <span class="case-id">EX-001</span>
+          </div>
+          <h2 id="case-title">Critical delivery at risk</h2>
+          <p>A shipment may miss its requested date. Operations needs the likely cause, supporting
+            evidence, and a safe next step.</p>
+          <dl class="case-facts">
+            <div><dt>Business impact</dt><dd>Customer delivery delay</dd></div>
+            <div><dt>Decision needed</dt><dd>What should operations do next?</dd></div>
+          </dl>
+        </article>
+      </div>
+
+      <div class="shell workflow-shell">
+        <ol class="progress-steps" aria-label="Demo progress">
+          <li class="active" data-step="1"><span>1</span><div><strong>Exception</strong><small>Understand the issue</small></div></li>
+          <li data-step="2"><span>2</span><div><strong>Evidence</strong><small>Read source systems</small></div></li>
+          <li data-step="3"><span>3</span><div><strong>Recommendation</strong><small>Explain the decision</small></div></li>
+          <li data-step="4"><span>4</span><div><strong>Action intent</strong><small>Record safely</small></div></li>
+        </ol>
+
+        <section class="start-panel" id="start-panel" aria-labelledby="start-heading">
+          <div>
+            <p class="section-kicker">Step 1</p>
+            <h2 id="start-heading">Ask the agent to investigate</h2>
+            <p>The agent will collect the linked ERP order, shipment status, and carrier note in a
+              deterministic sequence before either reasoner sees the case.</p>
+          </div>
+          <button class="button button-primary button-large" id="analyse-button" type="button">
+            <span>Analyse exception</span><span aria-hidden="true">→</span>
+          </button>
+        </section>
+
+        <section id="processing-panel" class="processing-panel" hidden aria-labelledby="processing-title">
+          <div class="spinner" aria-hidden="true"></div>
+          <div>
+            <h2 id="processing-title">Analysis in progress</h2>
+            <p id="processing-message">Waiting for the application to complete the analysis…</p>
+            <small>The verified activity timeline will replace this indicator when the response returns.</small>
+          </div>
+        </section>
+
+        <section id="error-panel" class="error-panel" hidden role="alert">
+          <div class="error-icon" aria-hidden="true">!</div>
+          <div>
+            <h2 id="error-title">The analysis could not be completed</h2>
+            <p id="error-message"></p>
+            <p class="run-reference" id="error-run"></p>
+            <button class="button button-secondary" id="retry-button" type="button">Try again</button>
+          </div>
+        </section>
+
+        <div id="results" hidden>
+          <section class="result-section" aria-labelledby="evidence-heading">
+            <div class="section-heading">
+              <div><p class="section-kicker">Step 2</p><h2 id="evidence-heading">Evidence collected from enterprise tools</h2></div>
+              <p>These facts are application-owned records. The reasoner can reference them but cannot rewrite them.</p>
+            </div>
+            <div class="evidence-grid" id="evidence-grid"></div>
+          </section>
+
+          <section class="result-section" aria-labelledby="recommendation-heading">
+            <div class="section-heading">
+              <div><p class="section-kicker">Step 3</p><h2 id="recommendation-heading">Grounded recommendation</h2></div>
+              <p>Structured output is validated before it reaches this screen.</p>
+            </div>
+            <article class="recommendation-card">
+              <div class="recommendation-main">
+                <div class="recommendation-labels">
+                  <span class="category-pill" id="category"></span>
+                  <span class="risk-pill" id="risk"></span>
+                  <span class="approval-pill" id="approval"></span>
+                </div>
+                <h3 id="recommendation-summary"></h3>
+                <div class="action-callout">
+                  <span aria-hidden="true">→</span>
+                  <div><small>Recommended next step</small><p id="recommended-action"></p></div>
+                </div>
+              </div>
+              <div class="confidence-panel" aria-label="Recommendation confidence">
+                <div class="confidence-ring" id="confidence-ring"><strong id="confidence"></strong></div>
+                <span>Confidence</span>
+              </div>
+            </article>
+          </section>
+
+          <section class="result-section" aria-labelledby="action-heading">
+            <div class="section-heading">
+              <div><p class="section-kicker">Step 4</p><h2 id="action-heading">Record a controlled action intent</h2></div>
+              <p>This demonstrates durable idempotency. External delivery remains deliberately disabled.</p>
+            </div>
+            <div class="action-layout">
+              <form id="action-form" class="action-form">
+                <div class="form-field">
+                  <label for="document-type">Document to request</label>
+                  <select id="document-type" name="document_type">
+                    <option value="commercial_invoice">Commercial invoice</option>
+                    <option value="certificate_of_origin">Certificate of origin</option>
+                    <option value="packing_list">Packing list</option>
+                    <option value="other">Other document</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="action-reason">Business reason</label>
+                  <textarea id="action-reason" name="reason" rows="4" maxlength="1000" required></textarea>
+                </div>
+                <div class="form-actions">
+                  <button class="button button-primary" id="record-action-button" type="submit">Record action intent</button>
+                  <button class="button button-secondary" id="replay-action-button" type="button" hidden>Replay same request</button>
+                  <button class="button button-quiet" id="new-action-button" type="button" hidden>Start new request</button>
+                </div>
+              </form>
+              <aside class="guardrail-card">
+                <p class="guardrail-title"><span aria-hidden="true">✓</span> Safety boundary</p>
+                <ul>
+                  <li>Validates the current exception and linked records</li>
+                  <li>Stores one immutable intent under an idempotency key</li>
+                  <li>Does not email, approve, dispatch, or update ERP</li>
+                </ul>
+              </aside>
+            </div>
+            <div id="action-result" class="action-result" hidden aria-live="polite"></div>
+          </section>
+
+          <section class="result-section trace-section" aria-labelledby="trace-heading">
+            <div class="section-heading">
+              <div><p class="section-kicker">Traceability</p><h2 id="trace-heading">What actually happened</h2></div>
+              <p>Events below come from the correlated application trace—not from a simulated animation.</p>
+            </div>
+            <ol id="audit-timeline" class="audit-timeline"></ol>
+            <details class="technical-details">
+              <summary>Technical details for reviewers</summary>
+              <div class="technical-meta" id="technical-meta"></div>
+              <pre id="technical-json"></pre>
+            </details>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section id="architecture-panel" class="tab-panel architecture-panel" role="tabpanel" aria-labelledby="architecture-tab" hidden>
+      <div class="shell architecture-hero">
+        <p class="eyebrow">Architecture at a glance</p>
+        <h1>A controlled path from enterprise evidence to action.</h1>
+        <p>The same typed tool layer serves deterministic orchestration and read-only MCP access.
+          Reasoning proposes; application code validates and records.</p>
+      </div>
+
+      <div class="shell">
+        <section class="architecture-section" aria-labelledby="system-architecture-heading">
+          <div class="section-heading">
+            <div><p class="section-kicker">System view</p><h2 id="system-architecture-heading">Separation of responsibilities</h2></div>
+          </div>
+          <div class="architecture-grid" role="img" aria-label="Architecture from user interface through API, orchestration, tools, reasoners, traces, and action journal">
+            <div class="architecture-column">
+              <span class="column-label">Experience</span>
+              <div class="architecture-node node-blue"><strong>Guided demo UI</strong><small>Business workflow</small></div>
+              <div class="architecture-node"><strong>MCP clients</strong><small>Read-only experiment</small></div>
+            </div>
+            <div class="architecture-arrow" aria-hidden="true">→</div>
+            <div class="architecture-column">
+              <span class="column-label">Application</span>
+              <div class="architecture-node node-teal"><strong>FastAPI contracts</strong><small>REST + MCP server</small></div>
+              <div class="architecture-node"><strong>Orchestrator</strong><small>Sequential context collection</small></div>
+            </div>
+            <div class="architecture-arrow" aria-hidden="true">→</div>
+            <div class="architecture-column">
+              <span class="column-label">Enterprise access</span>
+              <div class="architecture-node node-gold"><strong>EnterpriseToolService</strong><small>Shared typed contract</small></div>
+              <div class="architecture-node"><strong>ERP connector</strong><small>Fixture or resilient HTTP</small></div>
+              <div class="architecture-node"><strong>Logistics connector</strong><small>Fixture or resilient HTTP</small></div>
+            </div>
+            <div class="architecture-arrow" aria-hidden="true">→</div>
+            <div class="architecture-column">
+              <span class="column-label">Decide &amp; record</span>
+              <div class="architecture-node node-purple"><strong>Reasoner</strong><small>Rules or Azure OpenAI</small></div>
+              <div class="architecture-node"><strong>Evidence validation</strong><small>Reject unknown references</small></div>
+              <div class="architecture-node"><strong>Trace + SQLite</strong><small>Runs and action intents</small></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="architecture-section" aria-labelledby="request-flow-heading">
+          <div class="section-heading">
+            <div><p class="section-kicker">Request flow</p><h2 id="request-flow-heading">From alert to controlled intent</h2></div>
+          </div>
+          <ol class="flow-list">
+            <li><span>01</span><div><strong>Receive exception</strong><p>A known exception ID starts a correlated run.</p></div></li>
+            <li><span>02</span><div><strong>Collect evidence</strong><p>ERP, shipment, and note records are fetched sequentially.</p></div></li>
+            <li><span>03</span><div><strong>Reason</strong><p>The selected provider receives one canonical context snapshot.</p></div></li>
+            <li><span>04</span><div><strong>Validate</strong><p>Schema, confidence, and evidence references are checked locally.</p></div></li>
+            <li><span>05</span><div><strong>Recommend</strong><p>The user sees a grounded, advisory next step.</p></div></li>
+            <li><span>06</span><div><strong>Record intent</strong><p>SQLite stores one idempotent record; nothing is dispatched.</p></div></li>
+          </ol>
+        </section>
+
+        <section class="architecture-section" aria-labelledby="production-path-heading">
+          <div class="section-heading">
+            <div><p class="section-kicker">Evolution path</p><h2 id="production-path-heading">Demo today, production integration tomorrow</h2></div>
+          </div>
+          <div class="comparison-grid">
+            <article>
+              <span class="comparison-label today">Demo today</span>
+              <h3>Safe, local, and inspectable</h3>
+              <ul>
+                <li>Synthetic fixture records by default</li>
+                <li>Local SQLite action-intent journal</li>
+                <li>Process-local trace history</li>
+                <li>Advisory approval flag</li>
+                <li>No external business side effects</li>
+              </ul>
+            </article>
+            <article>
+              <span class="comparison-label future">Production integration</span>
+              <h3>Enterprise-controlled execution</h3>
+              <ul>
+                <li>Authenticated ERP and logistics APIs</li>
+                <li>Entra ID and least-privilege agent identity</li>
+                <li>Remote MCP OAuth and strict tool allowlists</li>
+                <li>Enforced human approval policy</li>
+                <li>Durable audit and deterministic dispatch</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <div id="live-status" class="sr-only" aria-live="polite"></div>
+  <footer>
+    <span>Supply Chain Exception Agent</span>
+    <span>Evidence first · Human controlled · Integration ready</span>
+  </footer>
+</body>
+</html>

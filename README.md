@@ -35,6 +35,17 @@ The default `rule_based` provider runs without Azure credentials.
 
 - Swagger: http://127.0.0.1:8000/docs
 - Health: http://127.0.0.1:8000/health
+- Guided business demo: http://127.0.0.1:8000/demo
+
+If PowerShell script execution is restricted, activation is unnecessary. Run the environment's
+Python executable directly:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+```
+
+The `/demo` page walks a nontechnical audience through evidence collection, recommendation,
+traceability, action-intent recording, idempotent replay, and the production integration path.
 
 ```powershell
 curl.exe -X POST http://127.0.0.1:8000/exceptions/EX-001/resolve

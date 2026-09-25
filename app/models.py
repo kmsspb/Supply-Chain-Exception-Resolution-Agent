@@ -113,3 +113,11 @@ class ActionIntent(BaseModel):
     reason: str
     status: str
     created_at: str
+
+
+class DemoStatus(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    version: str
+    reasoner_provider: str
+    connector_mode: str
+    action_mode: str = "record_only"

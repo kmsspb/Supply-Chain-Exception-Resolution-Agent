@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Supply Chain Exception Agent">
+  <rect width="64" height="64" rx="15" fill="#087d78"/>
+  <rect x="15" y="35" width="9" height="14" rx="3" fill="#bfe9e4"/>
+  <rect x="28" y="25" width="9" height="24" rx="3" fill="#dff4f1"/>
+  <rect x="41" y="15" width="9" height="34" rx="3" fill="#fff"/>
+</svg>

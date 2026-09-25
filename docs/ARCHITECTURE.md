@@ -1,5 +1,9 @@
 # Architecture — v0.4
 
+The application also serves a dependency-free guided business interface at `/demo`. It calls the
+same REST contracts described below and includes a presentation-oriented architecture view. Its
+status endpoint exposes only the application version and safe provider/connector/action mode labels.
+
 ## Implemented request flow
 
 ```text
