@@ -53,18 +53,25 @@
           </div>
         </div>
         <article class="exception-card" aria-labelledby="case-title">
+          <div class="case-selector">
+            <label for="case-select">Demo scenario</label>
+            <select id="case-select">
+              <option value="EX-001">EX-001 · Missing commercial invoice</option>
+            </select>
+          </div>
           <div class="card-topline">
             <span class="status-dot" aria-hidden="true"></span>
             <span>Open exception</span>
-            <span class="case-id">EX-001</span>
+            <span class="case-id" id="case-id">EX-001</span>
           </div>
           <h2 id="case-title">Critical delivery at risk</h2>
-          <p>What is blocking the shipment, and what evidence supports the next action?</p>
+          <p id="case-question">What is blocking the shipment, and what evidence supports the next action?</p>
           <dl class="case-facts">
-            <div><dt>Order request</dt><dd>SO-1001 · 25 Sep 2026</dd></div>
-            <div><dt>Carrier status</dt><dd>Customs hold · ETA 28 Sep</dd></div>
-            <div><dt>Carrier report</dt><dd>Corrected commercial invoice awaited</dd></div>
-            <div><dt>Business impact</dt><dd>Delivery at risk</dd></div>
+            <div><dt>Order request</dt><dd id="case-order">SO-1001 · 2026-09-25</dd></div>
+            <div><dt>Carrier status</dt><dd id="case-status">customs hold · ETA 2026-09-28</dd></div>
+            <div><dt>Carrier report</dt><dd id="case-report">Corrected commercial invoice awaited</dd></div>
+            <div><dt>Business impact</dt><dd id="case-impact">Delivery at risk</dd></div>
+            <div><dt>Reasoning route</dt><dd id="case-strategy">Configured reasoner</dd></div>
           </dl>
         </article>
       </div>
@@ -134,6 +141,7 @@
                 <span title="Self-reported by the reasoner; not validated accuracy, business risk, or permission to act.">Reasoner confidence · uncalibrated</span>
               </div>
             </article>
+            <div class="reasoning-chain" id="reasoning-chain" aria-label="Facts, inference, and proposed action"></div>
           </section>
 
           <section class="result-section" aria-labelledby="action-heading">
@@ -207,7 +215,7 @@
       </div>
 
       <div class="shell architecture-content">
-        <section class="architecture-section" aria-labelledby="runtime-heading">
+        <section class="architecture-section runtime-section" aria-labelledby="runtime-heading">
           <div class="architecture-heading-row">
             <div>
               <p class="section-kicker">Current solution</p>
@@ -273,6 +281,8 @@
           </ol>
         </section>
 
+        <details class="architecture-details">
+          <summary>Detailed target process and technical contracts</summary>
         <section class="architecture-section target-section" aria-labelledby="target-process-heading">
           <div class="architecture-heading-row">
             <div>
@@ -332,6 +342,7 @@
               Policy evaluates the proposed action; approved deterministic API or RPA handlers execute it.</p>
           </div>
         </section>
+        </details>
 
         <section id="enterprise-architecture" class="architecture-section enterprise-section" aria-labelledby="portfolio-heading">
           <div class="architecture-heading-row">
@@ -439,8 +450,16 @@
 
   <div id="live-status" class="sr-only" aria-live="polite"></div>
   <footer>
-    <span>Supply Chain Exception Agent</span>
-    <span>Evidence first · Human controlled · Integration ready</span>
+    <div>
+      <strong>Supply Chain Exception Agent</strong>
+      <span>Independent synthetic portfolio exercise; not a Wärtsilä system or use of its internal data.</span>
+    </div>
+    <nav aria-label="Technical portfolio links">
+      <a href="https://github.com/kmsspb/Supply-Chain-Exception-Resolution-Agent#readme">GitHub README</a>
+      <a href="https://github.com/kmsspb/Supply-Chain-Exception-Resolution-Agent/blob/main/docs/ARCHITECTURE.md">Architecture decisions</a>
+      <a href="https://github.com/kmsspb/Supply-Chain-Exception-Resolution-Agent/tree/main/tests">Tests</a>
+      <a href="https://github.com/kmsspb/Supply-Chain-Exception-Resolution-Agent/blob/main/docs/EVALUATION.md">Evaluation method</a>
+    </nav>
   </footer>
 </body>
 </html>

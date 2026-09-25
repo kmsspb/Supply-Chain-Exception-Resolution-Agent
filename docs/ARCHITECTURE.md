@@ -15,6 +15,7 @@ POST /exceptions/{id}/resolve
   -> load local exception
   -> EnterpriseToolService reads ERP order, shipment, and carrier note sequentially
   -> validate required record shape/relationships and build canonical evidence
+  -> select the explicitly deterministic demo route where configured; otherwise use the configured provider
   -> selected Reasoner.resolve(ReasoningContext)
        RuleBasedReasoner | AzureOpenAIReasoner
   -> local recommendation and citation validation

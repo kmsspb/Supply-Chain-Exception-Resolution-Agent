@@ -11,7 +11,7 @@ def test_six_cases_and_baseline_limitations_are_preserved():
     assert all(case["results"]["rule_based"]["status"] == "success" for case in report["cases"])
     categories = [case["results"]["rule_based"]["recommendation"]["category"] for case in report["cases"]]
     assert categories == [
-        "customs_documentation", "customs_documentation", "unknown_logistics_exception",
+        "customs_documentation", "customs_documentation", "weather_delay",
         "unknown_logistics_exception", "customs_documentation", "customs_documentation",
     ]
     assert report["cases"][1]["expected"]["category"] == "customs_cleared"

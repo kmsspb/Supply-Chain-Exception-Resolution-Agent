@@ -5,5 +5,26 @@
     "shipment_id": "SHP-9001",
     "exception_type": "late_delivery",
     "detected_at": "2026-09-24T08:15:00Z"
+  },
+  {
+    "exception_id": "EX-002",
+    "order_id": "SO-1002",
+    "shipment_id": "SHP-9002",
+    "exception_type": "weather_delay",
+    "detected_at": "2026-09-25T06:30:00Z"
+  },
+  {
+    "exception_id": "EX-003",
+    "order_id": "SO-1003",
+    "shipment_id": "SHP-9003",
+    "exception_type": "conflicting_status",
+    "detected_at": "2026-09-25T07:10:00Z"
+  },
+  {
+    "exception_id": "EX-004",
+    "order_id": "SO-1004",
+    "shipment_id": "SHP-9004",
+    "exception_type": "missing_evidence",
+    "detected_at": "2026-09-25T07:45:00Z"
   }
 ]

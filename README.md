@@ -8,10 +8,11 @@ deterministic baseline and Azure OpenAI integration, typed fixture/HTTP connecto
 read-only MCP server, and durable recording of synthetic document-request intents. It does not
 send messages, call suppliers, mutate ERP data, approve actions, or resolve exception status.
 
-## Scenario
+## Demo scenarios
 
-For fictional Nordic Marine Components, an order is due on 2026-09-25, the carrier reports
-2026-09-28, and a note describes an incomplete customs invoice. Local synthetic JSON records
+Four synthetic cases make the technology and safety choices visible: a missing commercial invoice,
+a known weather delay routed to the deterministic baseline, conflicting carrier records routed to
+the configured reasoner, and a missing-evidence case that stops before reasoning. Local JSON records
 stand in for ERP, logistics, and communication systems.
 
 The baseline uses the original keyword rule and fixed confidence values. The Azure provider
@@ -44,8 +45,8 @@ Python executable directly:
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
-The `/demo` page walks a nontechnical audience through evidence collection, recommendation,
-traceability, action-intent recording, idempotent replay, and the production integration path.
+The `/demo` page walks a nontechnical audience through scenario selection, evidence collection,
+recommendation, traceability, proposed-action recording, idempotent replay, and the production path.
 Open `/demo?view=architecture` to present the target process and enterprise API/RPA/agent model directly.
 
 ```powershell
@@ -96,6 +97,7 @@ baseline fallback. Secrets stay out of source control; do not place real keys in
 | Endpoint | Behaviour |
 | --- | --- |
 | `GET /health` | Process health; does not probe Azure |
+| `GET /demo/cases` | List the four synthetic demonstration scenarios and their reasoning route |
 | `POST /exceptions/{exception_id}/resolve` | Collect context and return a recommendation |
 | `GET /exceptions/{exception_id}/audit?run_id=...` | Retrieve events for an exception, optionally one run |
 | `POST /actions/request-document` | Validate linked records and durably record an idempotent action intent |

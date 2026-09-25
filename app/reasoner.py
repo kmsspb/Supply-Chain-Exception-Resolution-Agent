@@ -24,7 +24,22 @@ class RuleBasedReasoner:
 
     def resolve(self, context: ReasoningContext) -> ReasonerResult:
         note_text = context.note["text"].lower()
-        if "customs" in note_text and ("document" in note_text or "documentation" in note_text):
+        shipment_status = context.shipment["status"].lower()
+        if shipment_status == "weather_delay" and ("storm" in note_text or "weather" in note_text):
+            category = "weather_delay"
+            summary = "The shipment is delayed because severe weather closed the port."
+            action = "Monitor the carrier for the next sailing and confirm the revised ETA before updating the customer."
+            confidence = 0.98
+            risk = RiskLevel.MEDIUM
+            proposal = ActionProposal(
+                action_type=ProposedActionType.MONITOR_SHIPMENT,
+                document_type=None,
+                target_system=ActionTarget.SHIPMENT_MONITORING,
+                requires_approval=True,
+                execution_mode=ExecutionMode.RECORD_ONLY,
+                supported=False,
+            )
+        elif "customs" in note_text and ("document" in note_text or "documentation" in note_text):
             category = "customs_documentation"
             summary = "Shipment delay is most likely caused by incomplete customs documentation."
             confidence = 0.93

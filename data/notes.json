@@ -3,5 +3,15 @@
     "note_id": "NOTE-7001",
     "shipment_id": "SHP-9001",
     "text": "Shipment is on customs hold because required customs documentation is incomplete. Awaiting corrected commercial invoice."
+  },
+  {
+    "note_id": "NOTE-7002",
+    "shipment_id": "SHP-9002",
+    "text": "The port is closed because of a severe storm. The next sailing is awaiting confirmation."
+  },
+  {
+    "note_id": "NOTE-7003",
+    "shipment_id": "SHP-9003",
+    "text": "A carrier representative says movement may have resumed, but tracking still shows a hold. Neither update has a reliable timestamp."
   }
 ]

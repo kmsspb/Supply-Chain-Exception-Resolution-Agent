@@ -6,16 +6,67 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.actions import ActionIntentService, ActionStore
+from app import repository
 from app.audit import get_events
 from app.config import ActionSettings
 from app.connectors import ConnectorBundle, EnterpriseToolService, create_connector_bundle
 from app.errors import ResolutionError
 from app.models import ActionIntent, DemoStatus, RequestDocumentInput, ResolutionRecommendation
-from app.reasoner import Reasoner, create_reasoner
+from app.reasoner import Reasoner, RuleBasedReasoner, create_reasoner
 from app.service import resolve_exception
 
 APP_VERSION = "0.4.0"
 DEMO_DIR = Path(__file__).resolve().parent / "demo"
+DETERMINISTIC_DEMO_CASES = frozenset({"EX-002"})
+
+DEMO_CASES = (
+    {
+        "exception_id": "EX-001", "label": "Missing commercial invoice",
+        "title": "Critical delivery at risk",
+        "question": "What is blocking the shipment, and what evidence supports the next action?",
+        "impact": "Delivery at risk", "strategy": "Configured reasoner",
+        "report_summary": "Awaiting a corrected commercial invoice",
+    },
+    {
+        "exception_id": "EX-002", "label": "Deterministic weather delay",
+        "title": "Port closure delays sailing",
+        "question": "Can a known operational status be handled without an LLM?",
+        "impact": "Delivery at risk", "strategy": "Deterministic baseline",
+        "report_summary": "Port closed by severe storm; next sailing unconfirmed",
+    },
+    {
+        "exception_id": "EX-003", "label": "Ambiguous carrier update",
+        "title": "Conflicting shipment status",
+        "question": "What can be concluded when source records disagree?",
+        "impact": "Manual investigation likely", "strategy": "Configured reasoner",
+        "report_summary": "Carrier and tracking updates conflict; reliable timestamps are missing",
+    },
+    {
+        "exception_id": "EX-004", "label": "Missing shipment evidence",
+        "title": "Required evidence unavailable",
+        "question": "Will the workflow stop instead of guessing?",
+        "impact": "Fail-closed demonstration", "strategy": "No reasoning if evidence is missing",
+        "report_summary": "Unavailable — analysis must stop",
+    },
+)
+
+
+def demo_cases() -> list[dict]:
+    cases = []
+    for definition in DEMO_CASES:
+        exception = repository.get_exception(definition["exception_id"])
+        order = repository.get_order(exception["order_id"])
+        shipment = repository.get_shipment(exception["shipment_id"])
+        cases.append({
+            **definition,
+            "order_request": f'{order["order_id"]} · {order["requested_delivery_date"]}',
+            "carrier_status": (
+                f'{shipment["status"]} · ETA {shipment["current_eta"]}'
+                if shipment else "Unavailable — analysis must stop"
+            ),
+            "carrier_report": definition["report_summary"],
+        })
+    return cases
 
 
 def create_app(
@@ -67,10 +118,19 @@ def create_app(
             connector_mode=request.app.state.connector_bundle.mode,
         )
 
+    @application.get("/demo/cases")
+    def list_demo_cases():
+        return {"cases": demo_cases()}
+
     @application.post("/exceptions/{exception_id}/resolve", response_model=ResolutionRecommendation)
     def resolve(exception_id: str, request: Request, response: Response):
         try:
-            result = resolve_exception(exception_id, request.app.state.reasoner, request.app.state.tools)
+            selected_reasoner = (
+                RuleBasedReasoner()
+                if exception_id in DETERMINISTIC_DEMO_CASES
+                else request.app.state.reasoner
+            )
+            result = resolve_exception(exception_id, selected_reasoner, request.app.state.tools)
         except ResolutionError as exc:
             raise HTTPException(
                 status_code=exc.status_code,

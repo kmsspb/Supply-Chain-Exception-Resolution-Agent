@@ -11,3 +11,11 @@ def test_customs_exception_resolution():
     assert result.action_proposal.execution_mode == "record_only"
     assert result.action_proposal.supported is True
     assert len(result.evidence) == 3
+
+
+def test_deterministic_weather_resolution_is_informational():
+    result = resolve_exception("EX-002")
+    assert result.category == "weather_delay"
+    assert result.action_proposal.action_type == "monitor_shipment"
+    assert result.action_proposal.document_type is None
+    assert result.action_proposal.supported is False

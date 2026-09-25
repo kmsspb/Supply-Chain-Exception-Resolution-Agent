@@ -5,5 +5,19 @@
     "status": "customs_hold",
     "current_eta": "2026-09-28",
     "last_event": "Held at export customs"
+  },
+  {
+    "shipment_id": "SHP-9002",
+    "carrier": "Example Ocean Freight",
+    "status": "weather_delay",
+    "current_eta": "2026-09-29",
+    "last_event": "Port closed after severe storm warning"
+  },
+  {
+    "shipment_id": "SHP-9003",
+    "carrier": "Example Logistics",
+    "status": "customs_hold",
+    "current_eta": "2026-09-30",
+    "last_event": "Tracking still reports customs hold"
   }
 ]

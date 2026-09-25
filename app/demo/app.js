@@ -4,6 +4,8 @@ const byId = (id) => document.getElementById(id);
 const state = {
   recommendation: null,
   systemStatus: null,
+  demoCases: [],
+  exceptionId: "EX-001",
   traces: [],
   actionKey: null,
   actionPayload: null,
@@ -105,6 +107,38 @@ async function loadSystemStatus() {
   }
 }
 
+async function loadDemoCases() {
+  try {
+    const { payload } = await fetchJson("/demo/cases");
+    state.demoCases = payload.cases || [];
+    const select = byId("case-select");
+    const options = state.demoCases.map((item) => {
+      const option = document.createElement("option");
+      option.value = item.exception_id;
+      option.textContent = `${item.exception_id} · ${item.label}`;
+      return option;
+    });
+    select.replaceChildren(...options);
+    select.value = state.exceptionId;
+    renderSelectedCase();
+  } catch (_) {
+    state.demoCases = [];
+  }
+}
+
+function renderSelectedCase() {
+  const selected = state.demoCases.find((item) => item.exception_id === state.exceptionId);
+  if (!selected) return;
+  byId("case-id").textContent = selected.exception_id;
+  byId("case-title").textContent = selected.title;
+  byId("case-question").textContent = selected.question;
+  byId("case-order").textContent = selected.order_request;
+  byId("case-status").textContent = humanize(selected.carrier_status);
+  byId("case-report").textContent = selected.carrier_report;
+  byId("case-impact").textContent = selected.impact;
+  byId("case-strategy").textContent = selected.strategy;
+}
+
 function selectTab(selectedTab, moveFocus = true) {
   const tabs = [byId("workflow-tab"), byId("architecture-tab")];
   for (const tab of tabs) {
@@ -187,12 +221,21 @@ function displayFields(record, source) {
   return keys;
 }
 
+function fieldSupport(source, key) {
+  if (source === "ERP" && key === "requested_delivery_date") return "cause";
+  if (source === "Logistics" && ["status", "last_event"].includes(key)) return "cause";
+  if (source === "Logistics" && key === "current_eta") return "both";
+  if (source === "Carrier note" && key === "text") return "both";
+  return null;
+}
+
 function renderEvidence(recommendation) {
   const container = byId("evidence-grid");
   const cards = [];
   for (const evidence of recommendation.evidence) {
     const card = document.createElement("article");
     card.className = "evidence-card";
+    card.id = `evidence-${evidence.evidence_id.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
     const cause = recommendation.cause_evidence_ids.includes(evidence.evidence_id);
     const action = recommendation.action_evidence_ids.includes(evidence.evidence_id);
     if (cause) card.classList.add("cited-cause");
@@ -228,6 +271,14 @@ function renderEvidence(recommendation) {
       const value = document.createElement("dd");
       term.textContent = humanize(key);
       value.textContent = typeof record[key] === "object" ? JSON.stringify(record[key]) : String(record[key]);
+      const support = fieldSupport(evidence.source, key);
+      if (support) {
+        row.classList.add("evidence-field-highlight");
+        const marker = document.createElement("small");
+        marker.className = "field-support";
+        marker.textContent = support === "both" ? "Cause + action" : "Cause";
+        value.append(marker);
+      }
       row.append(term, value);
       facts.append(row);
     }
@@ -235,15 +286,17 @@ function renderEvidence(recommendation) {
     const tags = document.createElement("div");
     tags.className = "citation-tags";
     if (cause) {
-      const tag = document.createElement("span");
+      const tag = document.createElement("a");
       tag.className = "citation-tag citation-cause";
       tag.textContent = "Supports cause";
+      tag.href = `#${card.id}`;
       tags.append(tag);
     }
     if (action) {
-      const tag = document.createElement("span");
+      const tag = document.createElement("a");
       tag.className = "citation-tag citation-action";
       tag.textContent = "Supports action";
+      tag.href = `#${card.id}`;
       tags.append(tag);
     }
     card.append(sourceRow, id, facts, tags);
@@ -274,6 +327,49 @@ function renderRecommendation(recommendation) {
         : "Status unavailable";
   byId("run-reasoner").textContent = `${humanize(recommendation.provider)} (${recommendation.provider})`;
   configureActionProposal(recommendation);
+  renderReasoningChain(recommendation);
+}
+
+function evidenceRecord(recommendation, source) {
+  const item = recommendation.evidence.find((evidence) => evidence.source === source);
+  if (!item) return {};
+  try {
+    return JSON.parse(item.fact);
+  } catch (_) {
+    return {};
+  }
+}
+
+function reasoningBlock(label, text, className) {
+  const block = document.createElement("div");
+  block.className = `reasoning-block ${className}`;
+  const heading = document.createElement("small");
+  const content = document.createElement("p");
+  heading.textContent = label;
+  content.textContent = text;
+  block.append(heading, content);
+  return block;
+}
+
+function renderReasoningChain(recommendation) {
+  const order = evidenceRecord(recommendation, "ERP");
+  const shipment = evidenceRecord(recommendation, "Logistics");
+  const note = evidenceRecord(recommendation, "Carrier note");
+  const knownFacts = [
+    order.requested_delivery_date ? `Requested ${order.requested_delivery_date}` : null,
+    shipment.status ? `status ${humanize(shipment.status)}` : null,
+    shipment.current_eta ? `ETA ${shipment.current_eta}` : null,
+    note.text ? `carrier note: ${note.text}` : null,
+  ].filter(Boolean).join(" · ");
+  const unknown = recommendation.category === "unknown_logistics_exception"
+    ? "Which conflicting update is current; reliable chronology; final operational cause."
+    : "Responsible document owner, approval decision, and final delivery outcome.";
+  byId("reasoning-chain").replaceChildren(
+    reasoningBlock("Source facts", knownFacts, "facts-block"),
+    reasoningBlock("Inference", recommendation.summary, "inference-block"),
+    reasoningBlock("Proposed action", recommendation.recommended_action, "proposal-block"),
+    reasoningBlock("Still unknown", unknown, "unknown-block"),
+  );
 }
 
 function configureActionProposal(recommendation) {
@@ -379,7 +475,7 @@ async function analyseException() {
   }, 1100);
 
   try {
-    const { payload } = await fetchJson("/exceptions/EX-001/resolve", { method: "POST" });
+    const { payload } = await fetchJson(`/exceptions/${encodeURIComponent(state.exceptionId)}/resolve`, { method: "POST" });
     state.recommendation = payload;
     renderEvidence(payload);
     renderRecommendation(payload);
@@ -436,6 +532,11 @@ function renderActionResult(record, replayed) {
     ? "Retry safety confirmed: the same key and payload reused the original record."
     : "No email was sent and no ERP data was changed. Approval and dispatch would be separate production steps.";
   const facts = document.createElement("dl");
+  const architectureButton = document.createElement("button");
+  architectureButton.className = "button button-quiet outcome-architecture-link";
+  architectureButton.type = "button";
+  architectureButton.textContent = "See target architecture";
+  architectureButton.addEventListener("click", () => selectTab(byId("architecture-tab")));
   const entries = [
     ["Action ID", record.action_id],
     ["Status", humanize(record.status)],
@@ -451,7 +552,7 @@ function renderActionResult(record, replayed) {
     wrapper.append(term, detail);
     facts.append(wrapper);
   }
-  container.replaceChildren(title, explanation, facts);
+  container.replaceChildren(title, explanation, facts, architectureButton);
   container.hidden = false;
 }
 
@@ -469,8 +570,10 @@ async function submitAction(replay = false) {
   if (!state.recommendation || !state.recommendation.action_proposal.supported) return;
   const recordButton = byId("record-action-button");
   const replayButton = byId("replay-action-button");
+  const activeButton = replay ? replayButton : recordButton;
   recordButton.disabled = true;
   replayButton.disabled = true;
+  activeButton.setAttribute("aria-busy", "true");
 
   if (!replay) {
     state.actionPayload = Object.freeze({
@@ -504,6 +607,8 @@ async function submitAction(replay = false) {
     recordButton.disabled = false;
     replayButton.disabled = false;
     announce("The action intent was not recorded.");
+  } finally {
+    activeButton.removeAttribute("aria-busy");
   }
 }
 
@@ -528,6 +633,12 @@ function configureActions() {
   });
   byId("replay-action-button").addEventListener("click", () => submitAction(true));
   byId("new-action-button").addEventListener("click", startNewAction);
+  byId("case-select").addEventListener("change", (event) => {
+    state.exceptionId = event.target.value;
+    resetWorkflow();
+    renderSelectedCase();
+    announce(`${state.exceptionId} selected. Review the case summary, then analyse the exception.`);
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -535,6 +646,7 @@ document.addEventListener("DOMContentLoaded", () => {
   configureActions();
   resetWorkflow();
   loadSystemStatus();
+  loadDemoCases();
   if (new URLSearchParams(window.location.search).get("view") === "architecture") {
     selectTab(byId("architecture-tab"), false);
   }

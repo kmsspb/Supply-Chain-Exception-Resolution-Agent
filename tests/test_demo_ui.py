@@ -28,8 +28,15 @@ def test_demo_page_and_local_assets_are_served():
     assert "API action handlers" in page.text and "RPA action workers" in page.text
     assert 'src="/demo/assets/app.js"' in page.text
     assert 'href="/demo/assets/styles.css"' in page.text
-    assert "http://" not in page.text and "https://" not in page.text
+    assert "http://" not in page.text
+    assert page.text.count("https://github.com/kmsspb/Supply-Chain-Exception-Resolution-Agent") == 4
     assert page.text.index('id="analyse-button"') < page.text.index('class="progress-steps"')
+    assert 'id="case-select"' in page.text
+    assert 'id="reasoning-chain"' in page.text
+    assert 'aria-label="Workflow overview"' in page.text
+    assert 'aria-label="Demo progress"' not in page.text
+    assert "Detailed target process and technical contracts" in page.text
+    assert "Independent synthetic portfolio exercise" in page.text
 
 
 def test_demo_status_is_sanitized_and_reports_runtime_modes(monkeypatch):
@@ -78,6 +85,7 @@ def test_demo_javascript_handles_safe_errors_and_exact_action_replay():
     with TestClient(create_app(RuleBasedReasoner())) as client:
         javascript = client.get("/demo/assets/app.js").text
         page = client.get("/demo").text
+        css = client.get("/demo/assets/styles.css").text
     for code in (
         "missing_evidence", "connector_bad_response", "invalid_provider_output",
         "connector_unavailable", "connector_circuit_open", "provider_unavailable",
@@ -93,6 +101,14 @@ def test_demo_javascript_handles_safe_errors_and_exact_action_replay():
     assert "Reasoner confidence · uncalibrated" in page
     assert "Record proposed action" in page
     assert "Human approval and execution exist only in the target architecture" in page
+    assert "state.exceptionId" in javascript
+    assert "/exceptions/EX-001/resolve" not in javascript
+    assert "evidence-field-highlight" in javascript
+    assert "tag.href" in javascript
+    assert "See target architecture" in javascript
+    assert 'activeButton.setAttribute("aria-busy", "true")' in javascript
+    assert 'button:disabled { cursor: not-allowed' in css
+    assert 'button[aria-busy="true"]' in css
 
 
 def test_guided_api_sequence_resolves_records_and_replays_same_action():
@@ -133,3 +149,42 @@ def test_demo_copy_distinguishes_recording_approval_and_execution():
     assert "Does not email, approve, dispatch, or update ERP" in page
     assert "Approval and dispatch would be separate production steps" in javascript
     assert "Action intent recorded safely" not in javascript
+
+
+def test_demo_cases_cover_deterministic_ambiguous_and_fail_closed_routes():
+    class MustNotRun:
+        provider = "azure_openai"
+
+        def describe(self):
+            return {}
+
+        def resolve(self, context):
+            raise AssertionError("reasoner must not be called")
+
+    with TestClient(create_app(MustNotRun())) as client:
+        catalogue = client.get("/demo/cases")
+        deterministic = client.post("/exceptions/EX-002/resolve")
+        missing = client.post("/exceptions/EX-004/resolve")
+
+    assert catalogue.status_code == 200
+    cases = catalogue.json()["cases"]
+    assert [case["exception_id"] for case in cases] == ["EX-001", "EX-002", "EX-003", "EX-004"]
+    assert {case["strategy"] for case in cases} == {
+        "Configured reasoner", "Deterministic baseline", "No reasoning if evidence is missing",
+    }
+    assert deterministic.status_code == 200
+    assert deterministic.json()["provider"] == "rule_based"
+    assert deterministic.json()["category"] == "weather_delay"
+    assert deterministic.json()["action_proposal"]["supported"] is False
+    assert missing.status_code == 422
+    assert missing.json()["detail"]["code"] == "missing_evidence"
+
+
+def test_ambiguous_case_returns_uncertainty_with_baseline():
+    with TestClient(create_app(RuleBasedReasoner())) as client:
+        response = client.post("/exceptions/EX-003/resolve")
+    assert response.status_code == 200
+    result = response.json()
+    assert result["category"] == "unknown_logistics_exception"
+    assert result["action_proposal"]["action_type"] == "manual_investigation"
+    assert result["action_proposal"]["supported"] is False
