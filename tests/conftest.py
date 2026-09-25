@@ -43,6 +43,11 @@ def draft(context):
         "category": "customs_documentation", "summary": "The invoice is incomplete.",
         "recommended_action": "Request the corrected invoice.", "confidence": 0.91,
         "risk_level": "medium", "human_approval_required": True,
+        "action_proposal": {
+            "action_type": "request_document", "document_type": "commercial_invoice",
+            "target_system": "document_request_workflow", "requires_approval": True,
+            "execution_mode": "record_only", "supported": True,
+        },
         "cause_evidence_ids": [context.evidence[2].evidence_id],
         "action_evidence_ids": [context.evidence[2].evidence_id],
     }

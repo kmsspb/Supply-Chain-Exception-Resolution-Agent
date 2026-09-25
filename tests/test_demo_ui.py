@@ -14,6 +14,8 @@ def test_demo_page_and_local_assets_are_served():
     assert page.headers["content-type"].startswith("text/html")
     assert "Guided business demonstration" in page.text
     assert "Analyse exception" in page.text
+    assert "Corrected commercial invoice awaited" in page.text
+    assert "Delivery at risk" in page.text
     assert "Architecture &amp; real-world path" in page.text
     assert "Demo today" in page.text and "Enterprise target" in page.text
     assert "Target operating process" in page.text
@@ -27,6 +29,7 @@ def test_demo_page_and_local_assets_are_served():
     assert 'src="/demo/assets/app.js"' in page.text
     assert 'href="/demo/assets/styles.css"' in page.text
     assert "http://" not in page.text and "https://" not in page.text
+    assert page.text.index('id="analyse-button"') < page.text.index('class="progress-steps"')
 
 
 def test_demo_status_is_sanitized_and_reports_runtime_modes(monkeypatch):
@@ -74,6 +77,7 @@ def test_demo_assets_are_accessible_and_render_untrusted_values_as_text():
 def test_demo_javascript_handles_safe_errors_and_exact_action_replay():
     with TestClient(create_app(RuleBasedReasoner())) as client:
         javascript = client.get("/demo/assets/app.js").text
+        page = client.get("/demo").text
     for code in (
         "missing_evidence", "connector_bad_response", "invalid_provider_output",
         "connector_unavailable", "connector_circuit_open", "provider_unavailable",
@@ -84,6 +88,11 @@ def test_demo_javascript_handles_safe_errors_and_exact_action_replay():
     assert '"Idempotency-Key": state.actionKey' in javascript
     assert "JSON.stringify(state.actionPayload)" in javascript
     assert 'response.headers.get("X-Run-ID")' in javascript
+    assert "recommendation.action_proposal.document_type" in javascript
+    assert "/invoice/i" not in javascript
+    assert "Reasoner confidence · uncalibrated" in page
+    assert "Record proposed action" in page
+    assert "Human approval and execution exist only in the target architecture" in page
 
 
 def test_guided_api_sequence_resolves_records_and_replays_same_action():
@@ -93,7 +102,7 @@ def test_guided_api_sequence_resolves_records_and_replays_same_action():
         recommendation = resolution.json()
         payload = {
             "exception_id": recommendation["exception_id"],
-            "document_type": "commercial_invoice",
+            "document_type": recommendation["action_proposal"]["document_type"],
             "reason": recommendation["recommended_action"],
         }
         headers = {"Idempotency-Key": "guided-demo-test-key"}
@@ -104,3 +113,23 @@ def test_guided_api_sequence_resolves_records_and_replays_same_action():
     assert first.headers["Idempotency-Replayed"] == "false"
     assert replay.headers["Idempotency-Replayed"] == "true"
     assert first.json() == replay.json()
+    assert recommendation["provider"] == "rule_based"
+    assert recommendation["action_proposal"] == {
+        "action_type": "request_document",
+        "document_type": "commercial_invoice",
+        "target_system": "document_request_workflow",
+        "requires_approval": True,
+        "execution_mode": "record_only",
+        "supported": True,
+    }
+    assert first.json()["document_type"] == recommendation["action_proposal"]["document_type"]
+
+
+def test_demo_copy_distinguishes_recording_approval_and_execution():
+    with TestClient(create_app(RuleBasedReasoner())) as client:
+        page = client.get("/demo").text
+        javascript = client.get("/demo/assets/app.js").text
+    assert "Record a proposed action only" in page
+    assert "Does not email, approve, dispatch, or update ERP" in page
+    assert "Approval and dispatch would be separate production steps" in javascript
+    assert "Action intent recorded safely" not in javascript

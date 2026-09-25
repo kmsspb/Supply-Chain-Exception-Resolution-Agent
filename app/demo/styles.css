@@ -148,8 +148,8 @@ button:disabled { cursor: wait; opacity: .65; }
   grid-template-columns: minmax(0, 1.35fr) minmax(300px, .65fr);
   gap: clamp(2rem, 7vw, 6rem);
   align-items: center;
-  padding-top: clamp(3.5rem, 8vw, 7rem);
-  padding-bottom: clamp(3.5rem, 8vw, 6rem);
+  padding-top: clamp(2rem, 4vw, 3.5rem);
+  padding-bottom: clamp(2rem, 4vw, 3.5rem);
 }
 .eyebrow, .section-kicker {
   margin: 0 0 .65rem;
@@ -160,10 +160,10 @@ button:disabled { cursor: wait; opacity: .65; }
   text-transform: uppercase;
 }
 .hero h1, .architecture-hero h1 {
-  max-width: 760px;
+  max-width: 700px;
   margin: 0;
-  font-size: clamp(2.35rem, 5.5vw, 4.7rem);
-  line-height: 1.02;
+  font-size: clamp(2.25rem, 4.3vw, 3.75rem);
+  line-height: 1.04;
   letter-spacing: -.045em;
 }
 .hero-lead, .architecture-hero > p:last-child {
@@ -174,8 +174,8 @@ button:disabled { cursor: wait; opacity: .65; }
 }
 .boundary-note {
   max-width: 670px;
-  margin-top: 1.8rem;
-  padding: 1rem 1.1rem;
+  margin-top: 1.25rem;
+  padding: .8rem 1rem;
   display: flex;
   gap: .75rem;
   color: #2e5d5a;
@@ -184,6 +184,8 @@ button:disabled { cursor: wait; opacity: .65; }
   border-radius: 0 10px 10px 0;
 }
 .boundary-note p { margin: 0; font-size: .9rem; }
+.hero-action { margin-top: 1.15rem; display: flex; align-items: center; flex-wrap: wrap; gap: .8rem 1rem; }
+.hero-action small { color: var(--muted); font-size: .72rem; }
 .exception-card {
   position: relative;
   padding: 1.5rem;
@@ -247,7 +249,7 @@ button:disabled { cursor: wait; opacity: .65; }
 .progress-steps li.active > span, .progress-steps li.complete > span { color: white; background: var(--teal); border-color: var(--teal); }
 .progress-steps li.complete::before { background: var(--teal); }
 
-.start-panel, .processing-panel, .error-panel {
+.processing-panel, .error-panel {
   padding: clamp(1.4rem, 4vw, 2.4rem);
   display: flex;
   align-items: center;
@@ -258,8 +260,8 @@ button:disabled { cursor: wait; opacity: .65; }
   border-radius: var(--radius);
   box-shadow: 0 8px 28px rgba(20,46,63,.06);
 }
-.start-panel h2, .processing-panel h2, .error-panel h2 { margin: 0; font-size: 1.5rem; letter-spacing: -.02em; }
-.start-panel p:not(.section-kicker), .processing-panel p, .error-panel p { max-width: 710px; margin: .45rem 0 0; color: var(--muted); }
+.processing-panel h2, .error-panel h2 { margin: 0; font-size: 1.5rem; letter-spacing: -.02em; }
+.processing-panel p, .error-panel p { max-width: 710px; margin: .45rem 0 0; color: var(--muted); }
 .button {
   min-height: 44px;
   padding: .68rem 1rem;
@@ -328,6 +330,11 @@ button:disabled { cursor: wait; opacity: .65; }
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
+.run-disclosure { margin-bottom: .8rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: .65rem; }
+.run-disclosure > div { padding: .75rem .85rem; background: white; border: 1px solid var(--line); border-radius: 10px; }
+.run-disclosure small, .run-disclosure strong { display: block; }
+.run-disclosure small { color: var(--muted); font-size: .62rem; letter-spacing: .05em; text-transform: uppercase; }
+.run-disclosure strong { margin-top: .2rem; font-size: .76rem; }
 .recommendation-labels { display: flex; flex-wrap: wrap; gap: .45rem; }
 .category-pill, .risk-pill, .approval-pill { padding: .32rem .58rem; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; background: rgba(255,255,255,.1); font-size: .7rem; font-weight: 750; }
 .risk-pill[data-risk="medium"] { color: #ffe3a5; border-color: rgba(255,209,112,.4); }
@@ -338,12 +345,14 @@ button:disabled { cursor: wait; opacity: .65; }
 .action-callout small { color: #acd2d1; font-size: .68rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .action-callout p { margin: .25rem 0 0; }
 .confidence-panel { min-width: 125px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .6rem; color: #bdd2dd; font-size: .72rem; }
+.confidence-panel > span { max-width: 145px; text-align: center; }
 .confidence-ring { --confidence: 0deg; width: 102px; height: 102px; display: grid; place-items: center; background: radial-gradient(circle, #18394d 59%, transparent 61%), conic-gradient(#54d8c9 var(--confidence), rgba(255,255,255,.13) 0); border-radius: 50%; }
 .confidence-ring strong { color: white; font-size: 1.45rem; }
 
 .action-layout { display: grid; grid-template-columns: 1.5fr .7fr; gap: 1rem; }
 .action-form, .guardrail-card { padding: 1.4rem; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
 .action-form { display: grid; grid-template-columns: .7fr 1.3fr; gap: 1rem; align-items: start; }
+.proposal-status { grid-column: 1 / -1; margin: 0; padding: .65rem .75rem; color: #315b59; background: var(--teal-pale); border-radius: 8px; font-size: .72rem; font-weight: 750; }
 .form-field { display: grid; gap: .45rem; }
 .form-field label { font-size: .78rem; font-weight: 750; }
 .form-field select, .form-field textarea { width: 100%; padding: .72rem .8rem; color: var(--ink); background: #fbfcfc; border: 1px solid #cbd7de; border-radius: 8px; }
@@ -513,6 +522,7 @@ footer { min-height: 80px; padding: 1.5rem clamp(1.25rem, 4vw, 4rem); display: f
   .action-layout, .action-form { grid-template-columns: 1fr; }
   .form-actions { grid-column: 1; }
   .audit-timeline { grid-template-columns: repeat(2, 1fr); }
+  .run-disclosure { grid-template-columns: repeat(2, 1fr); }
   .runtime-layer { grid-template-columns: 1fr; }
   .process-rail { grid-template-columns: 1fr; gap: .55rem; }
   .process-stage { min-height: 0; }
@@ -530,15 +540,16 @@ footer { min-height: 80px; padding: 1.5rem clamp(1.25rem, 4vw, 4rem); display: f
   .badge { white-space: normal; }
   .tabs { gap: 1rem; }
   .tabs button { font-size: .76rem; }
-  .hero { padding-top: 3rem; }
+  .hero { padding-top: 2rem; }
   .progress-steps { grid-template-columns: 1fr 1fr; row-gap: 1rem; }
   .progress-steps li::before { display: none; }
   .progress-steps small { display: none; }
-  .start-panel, .processing-panel, .error-panel { align-items: flex-start; flex-direction: column; }
+  .processing-panel, .error-panel { align-items: flex-start; flex-direction: column; }
   .button-large { width: 100%; }
   .section-heading { align-items: flex-start; flex-direction: column; gap: .5rem; }
   .section-heading > p { text-align: left; }
   .recommendation-card { grid-template-columns: 1fr; }
+  .run-disclosure { grid-template-columns: 1fr; }
   .confidence-panel { align-items: flex-start; }
   .confidence-ring { width: 86px; height: 86px; }
   .action-result dl, .audit-timeline, .comparison-grid { grid-template-columns: 1fr; }

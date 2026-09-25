@@ -101,8 +101,10 @@ baseline fallback. Secrets stay out of source control; do not place real keys in
 | `POST /actions/request-document` | Validate linked records and durably record an idempotent action intent |
 | `GET /actions/{action_id}` | Retrieve one recorded action intent |
 
-All original recommendation fields remain. Responses add `run_id`, `provider`,
-`cause_evidence_ids`, and `action_evidence_ids`; each evidence item adds `evidence_id`.
+All original recommendation fields remain. Responses add `run_id`, `provider`, a typed
+`action_proposal`, `cause_evidence_ids`, and `action_evidence_ids`; each evidence item adds
+`evidence_id`. The proposal states its action/document type, intended target, review requirement,
+support status, and the demo's `record_only` execution mode.
 The `X-Run-ID` response header matches the body, including handled analysis errors.
 Evidence facts are canonical JSON representations of retrieved records, constructed by the
 application rather than copied from model-generated prose.
@@ -122,8 +124,9 @@ Handled errors use:
 Connector bad responses use 502. Action requests require an `Idempotency-Key` of 8–128 visible
 ASCII characters: missing/malformed keys use 400 and payload conflicts use 409.
 
-Recommendations do not mutate business state. The document-request route writes only an immutable
-local SQLite intent with status `recorded`; it performs no external delivery. There is no approval
+Recommendations do not mutate business state. The document-request route writes only a durable
+local SQLite intent with status `recorded`; the current API exposes no update route, but SQLite is
+not presented as tamper-proof audit storage. It performs no external delivery. There is no approval
 endpoint, exception intake endpoint, or action executor.
 
 ## MCP read tools

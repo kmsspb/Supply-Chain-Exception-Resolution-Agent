@@ -44,8 +44,11 @@ closed at shutdown. Tests can inject a reasoner, tool service, and action store 
 - **Validation:** provider transport schema is separate from domain constraints. Validate finite
   confidence in [0,1], nonblank category/summary/action, nonempty cause/action citations, and
   membership in the supplied catalogue. Public facts are hydrated from that catalogue.
-- **Action intent:** `request_document` is an immutable SQLite record with status `recorded` and
-  REST idempotency. It is neither approval nor delivery. No message sending or ERP mutation occurs.
+- **Action proposal:** recommendations carry a validated, typed proposal. Only `request_document`
+  is recordable in the demo; manual investigation and monitoring proposals fail closed in the UI.
+- **Action intent:** `request_document` is a durable SQLite record with status `recorded` and REST
+  idempotency. The current API has no update route, but the database is not tamper-proof audit
+  storage. The record is neither approval nor delivery. No message sending or ERP mutation occurs.
 
 Reference integrity does not establish semantic entailment. Even a valid response can misinterpret
 facts or recommend an unsuitable action. Evaluation uses human review to assess unsupported

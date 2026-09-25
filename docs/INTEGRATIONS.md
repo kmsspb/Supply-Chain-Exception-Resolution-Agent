@@ -56,7 +56,8 @@ and [OpenAI MCP guidance](https://developers.openai.com/api/docs/guides/tools-co
 The request supports `commercial_invoice`, `certificate_of_origin`, `packing_list`, and `other`.
 A first accepted request returns 202 with `Idempotency-Replayed: false`; the same key and canonical
 payload returns the identical record with 202 and `true`, including after restart. A changed payload
-under that key returns 409. `GET /actions/{action_id}` retrieves the immutable record.
+under that key returns 409. `GET /actions/{action_id}` retrieves the durable record. The current
+API exposes no update operation; this does not make local SQLite tamper-proof audit storage.
 
 SQLite defaults to `.runtime/actions.sqlite3` and can be changed with `ACTION_DB_PATH`. It uses WAL,
 a busy timeout, atomic transactions, and a unique action-type/key-hash constraint. Only the SHA-256

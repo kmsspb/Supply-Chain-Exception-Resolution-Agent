@@ -62,6 +62,11 @@ def test_provider_schema_matches_azure_subset():
     ("action_evidence_ids", []), ("cause_evidence_ids", ["invented:123"]),
     ("action_evidence_ids", ["note:OTHER"]), ("risk_level", "catastrophic"),
     ("evidence", [{"fact": "invented"}]),
+    ("action_proposal", {
+        "action_type": "request_document", "document_type": None,
+        "target_system": "document_request_workflow", "requires_approval": True,
+        "execution_mode": "record_only", "supported": True,
+    }),
 ])
 def test_invalid_output_is_rejected_without_baseline(azure_factory, context, draft, field, value):
     draft[field] = value

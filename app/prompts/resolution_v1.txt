@@ -14,4 +14,10 @@ use weather_delay. For confirmed cleared customs documentation use customs_clear
 recommend checking the updated ETA, not requesting already completed documents.
 Confidence must be finite and between 0 and 1. Keep summary and action concise and nonempty.
 Recommendations are advisory. Set human_approval_required to true for this prototype.
+Return a typed action_proposal that agrees with the recommendation. Use request_document only
+when the evidence identifies missing or defective paperwork, and select the evidenced document
+type. Its target_system must be document_request_workflow and supported must be true. For manual
+investigation use target_system logistics_operations; for monitoring use shipment_monitoring.
+Those two action types are not supported by this demonstrator, so supported must be false and
+document_type must be null. Always set requires_approval to true and execution_mode to record_only.
 No actions have been executed and you have no authority to approve or execute them.

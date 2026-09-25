@@ -24,7 +24,7 @@ synthetic cases, including negation, conflicting evidence and instructions embed
   including explicit coverage when reviews, usage, or pricing are missing.
 - Shared typed ERP/logistics tools with fixture and resilient HTTP adapters.
 - A standalone read-only MCP server over stdio or loopback Streamable HTTP.
-- SQLite idempotency that returns one immutable action intent across retries and restarts.
+- SQLite idempotency that returns one durable action-intent record across retries and restarts.
 
 Mocked provider tests validate integration behaviour, not model quality. A live Azure evaluation
 and actual semantic review are needed before reporting Azure quality results. Valid citations alone

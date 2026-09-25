@@ -3,6 +3,7 @@
 const byId = (id) => document.getElementById(id);
 const state = {
   recommendation: null,
+  systemStatus: null,
   traces: [],
   actionKey: null,
   actionPayload: null,
@@ -33,7 +34,7 @@ const eventDescriptions = {
   output_validated: ["Output validated", "Required fields, confidence, and evidence references passed application checks."],
   recommendation_created: ["Recommendation created", "The validated recommendation became available to operations."],
   resolution_completed: ["Analysis completed", "The correlated run reached a successful terminal state."],
-  action_intent_recorded: ["Action intent recorded", "One immutable record was committed to the local action journal."],
+  action_intent_recorded: ["Proposed action recorded", "One durable record was committed to the local action journal."],
   action_intent_replayed: ["Idempotent replay confirmed", "The existing action record was returned without creating a duplicate."],
 };
 
@@ -87,6 +88,7 @@ async function loadSystemStatus() {
   const container = byId("system-badges");
   try {
     const { payload } = await fetchJson("/demo/status");
+    state.systemStatus = payload;
     const connectorLabel = payload.connector_mode === "fixture"
       ? "Synthetic fixture data"
       : payload.connector_mode === "http"
@@ -148,15 +150,14 @@ function resetWorkflow() {
   byId("results").hidden = true;
   byId("error-panel").hidden = true;
   byId("processing-panel").hidden = true;
-  byId("start-panel").hidden = false;
   byId("action-result").hidden = true;
+  byId("proposal-status").textContent = "";
   unlockActionForm();
   setProgress(1);
 }
 
 function showError(error) {
   byId("processing-panel").hidden = true;
-  byId("start-panel").hidden = false;
   byId("error-panel").hidden = false;
   byId("error-title").textContent = `Analysis stopped safely${error.status ? ` (HTTP ${error.status})` : ""}`;
   byId("error-message").textContent = errorMessages[error.code] || error.message || errorMessages.internal_error;
@@ -255,16 +256,43 @@ function renderRecommendation(recommendation) {
   byId("category").textContent = humanize(recommendation.category);
   byId("risk").textContent = `${humanize(recommendation.risk_level)} risk`;
   byId("risk").dataset.risk = recommendation.risk_level;
-  byId("approval").textContent = recommendation.human_approval_required ? "Human review advised" : "No approval flag";
+  byId("approval").textContent = recommendation.human_approval_required
+    ? "Review required before future execution"
+    : "No review flag";
   byId("recommendation-summary").textContent = recommendation.summary;
   byId("recommended-action").textContent = recommendation.recommended_action;
   const confidence = Math.round(recommendation.confidence * 100);
   byId("confidence").textContent = `${confidence}%`;
   byId("confidence-ring").style.setProperty("--confidence", `${confidence * 3.6}deg`);
+  const connectorMode = state.systemStatus && state.systemStatus.connector_mode;
+  byId("run-data-source").textContent = connectorMode === "fixture"
+    ? "Synthetic fixtures"
+    : connectorMode === "http"
+      ? "Read-only HTTP connectors"
+      : connectorMode === "injected"
+        ? "Injected test connectors"
+        : "Status unavailable";
+  byId("run-reasoner").textContent = `${humanize(recommendation.provider)} (${recommendation.provider})`;
+  configureActionProposal(recommendation);
+}
+
+function configureActionProposal(recommendation) {
+  const proposal = recommendation.action_proposal;
+  const supported = proposal
+    && proposal.supported
+    && proposal.action_type === "request_document"
+    && proposal.document_type;
   byId("action-reason").value = recommendation.recommended_action.slice(0, 1000);
-  byId("document-type").value = /invoice/i.test(recommendation.recommended_action)
-    ? "commercial_invoice"
-    : "other";
+  if (proposal && proposal.document_type) byId("document-type").value = proposal.document_type;
+  byId("document-type").disabled = true;
+  byId("action-reason").readOnly = true;
+  byId("record-action-button").disabled = !supported;
+  byId("proposal-status").textContent = proposal
+    ? `${humanize(proposal.action_type)} · ${proposal.document_type ? humanize(proposal.document_type) : "No document"} · Target: ${humanize(proposal.target_system)} · ${humanize(proposal.execution_mode)}`
+    : "No typed action proposal was returned.";
+  if (!supported) {
+    byId("proposal-status").textContent += " · Recording is not supported by this demo.";
+  }
 }
 
 function connectorEventDescription(event) {
@@ -335,7 +363,6 @@ async function analyseException() {
   resetWorkflow();
   const button = byId("analyse-button");
   button.disabled = true;
-  byId("start-panel").hidden = true;
   byId("processing-panel").hidden = false;
   setProgress(2);
   announce("Analysis started. Waiting for the verified application response.");
@@ -388,10 +415,13 @@ function lockActionForm() {
 }
 
 function unlockActionForm() {
-  byId("document-type").disabled = false;
+  byId("document-type").disabled = true;
   byId("action-reason").disabled = false;
+  byId("action-reason").readOnly = true;
   byId("record-action-button").hidden = false;
-  byId("record-action-button").disabled = false;
+  byId("record-action-button").disabled = !(state.recommendation
+    && state.recommendation.action_proposal
+    && state.recommendation.action_proposal.supported);
   byId("replay-action-button").hidden = true;
   byId("replay-action-button").disabled = false;
   byId("new-action-button").hidden = true;
@@ -400,11 +430,11 @@ function unlockActionForm() {
 function renderActionResult(record, replayed) {
   const container = byId("action-result");
   const title = document.createElement("h3");
-  title.textContent = replayed ? "Existing action returned—no duplicate created" : "Action intent recorded safely";
+  title.textContent = replayed ? "Existing proposal returned—no duplicate created" : "Proposed request stored locally";
   const explanation = document.createElement("p");
   explanation.textContent = replayed
-    ? "The identical idempotency key and payload returned the original immutable record."
-    : "The intent is durable in local SQLite, but no external message or ERP update was performed.";
+    ? "Retry safety confirmed: the same key and payload reused the original record."
+    : "No email was sent and no ERP data was changed. Approval and dispatch would be separate production steps.";
   const facts = document.createElement("dl");
   const entries = [
     ["Action ID", record.action_id],
@@ -436,7 +466,7 @@ function renderActionError(error) {
 }
 
 async function submitAction(replay = false) {
-  if (!state.recommendation) return;
+  if (!state.recommendation || !state.recommendation.action_proposal.supported) return;
   const recordButton = byId("record-action-button");
   const replayButton = byId("replay-action-button");
   recordButton.disabled = true;
@@ -445,7 +475,7 @@ async function submitAction(replay = false) {
   if (!replay) {
     state.actionPayload = Object.freeze({
       exception_id: state.recommendation.exception_id,
-      document_type: byId("document-type").value,
+      document_type: state.recommendation.action_proposal.document_type,
       reason: byId("action-reason").value,
     });
   }
@@ -483,8 +513,9 @@ function startNewAction() {
   state.actionRecord = null;
   byId("action-result").hidden = true;
   unlockActionForm();
+  configureActionProposal(state.recommendation);
   setProgress(4);
-  byId("document-type").focus();
+  byId("record-action-button").focus();
   announce("A new action request can now be prepared with a new idempotency key.");
 }
 

@@ -38,12 +38,18 @@
           <h1>Resolve a late shipment with evidence you can verify.</h1>
           <p class="hero-lead">
             Follow one operational exception from enterprise records to a grounded recommendation
-            and a safely recorded action intent.
+            and a proposed next action for human review.
           </p>
           <div class="boundary-note">
             <span aria-hidden="true">◈</span>
             <p><strong>Safe demonstration.</strong> The default uses synthetic records. Recording an
               action creates a local intent only—it never sends a message or changes ERP data.</p>
+          </div>
+          <div class="hero-action">
+            <button class="button button-primary button-large" id="analyse-button" type="button">
+              <span>Analyse exception</span><span aria-hidden="true">→</span>
+            </button>
+            <small>Application-orchestrated reads · recommendation only</small>
           </div>
         </div>
         <article class="exception-card" aria-labelledby="case-title">
@@ -53,34 +59,23 @@
             <span class="case-id">EX-001</span>
           </div>
           <h2 id="case-title">Critical delivery at risk</h2>
-          <p>A shipment may miss its requested date. Operations needs the likely cause, supporting
-            evidence, and a safe next step.</p>
+          <p>What is blocking the shipment, and what evidence supports the next action?</p>
           <dl class="case-facts">
-            <div><dt>Business impact</dt><dd>Customer delivery delay</dd></div>
-            <div><dt>Decision needed</dt><dd>What should operations do next?</dd></div>
+            <div><dt>Order request</dt><dd>SO-1001 · 25 Sep 2026</dd></div>
+            <div><dt>Carrier status</dt><dd>Customs hold · ETA 28 Sep</dd></div>
+            <div><dt>Carrier report</dt><dd>Corrected commercial invoice awaited</dd></div>
+            <div><dt>Business impact</dt><dd>Delivery at risk</dd></div>
           </dl>
         </article>
       </div>
 
       <div class="shell workflow-shell">
-        <ol class="progress-steps" aria-label="Demo progress">
+        <ol class="progress-steps" aria-label="Workflow overview">
           <li class="active" data-step="1"><span>1</span><div><strong>Exception</strong><small>Understand the issue</small></div></li>
           <li data-step="2"><span>2</span><div><strong>Evidence</strong><small>Read source systems</small></div></li>
           <li data-step="3"><span>3</span><div><strong>Recommendation</strong><small>Explain the decision</small></div></li>
-          <li data-step="4"><span>4</span><div><strong>Action intent</strong><small>Record safely</small></div></li>
+          <li data-step="4"><span>4</span><div><strong>Prepare for review</strong><small>Record a proposal</small></div></li>
         </ol>
-
-        <section class="start-panel" id="start-panel" aria-labelledby="start-heading">
-          <div>
-            <p class="section-kicker">Step 1</p>
-            <h2 id="start-heading">Ask the agent to investigate</h2>
-            <p>The agent will collect the linked ERP order, shipment status, and carrier note in a
-              deterministic sequence before either reasoner sees the case.</p>
-          </div>
-          <button class="button button-primary button-large" id="analyse-button" type="button">
-            <span>Analyse exception</span><span aria-hidden="true">→</span>
-          </button>
-        </section>
 
         <section id="processing-panel" class="processing-panel" hidden aria-labelledby="processing-title">
           <div class="spinner" aria-hidden="true"></div>
@@ -115,6 +110,12 @@
               <div><p class="section-kicker">Step 3</p><h2 id="recommendation-heading">Grounded recommendation</h2></div>
               <p>Structured output is validated before it reaches this screen.</p>
             </div>
+            <div class="run-disclosure" aria-label="Execution facts for this run">
+              <div><small>Data used</small><strong id="run-data-source">Loading…</strong></div>
+              <div><small>Reasoner used for this run</small><strong id="run-reasoner">Loading…</strong></div>
+              <div><small>Tool control</small><strong>Application-orchestrated</strong></div>
+              <div><small>Agent authority</small><strong>Recommendation only</strong></div>
+            </div>
             <article class="recommendation-card">
               <div class="recommendation-main">
                 <div class="recommendation-labels">
@@ -128,23 +129,24 @@
                   <div><small>Recommended next step</small><p id="recommended-action"></p></div>
                 </div>
               </div>
-              <div class="confidence-panel" aria-label="Recommendation confidence">
+              <div class="confidence-panel" aria-label="Uncalibrated reasoner confidence">
                 <div class="confidence-ring" id="confidence-ring"><strong id="confidence"></strong></div>
-                <span>Confidence</span>
+                <span title="Self-reported by the reasoner; not validated accuracy, business risk, or permission to act.">Reasoner confidence · uncalibrated</span>
               </div>
             </article>
           </section>
 
           <section class="result-section" aria-labelledby="action-heading">
             <div class="section-heading">
-              <div><p class="section-kicker">Step 4</p><h2 id="action-heading">Record a controlled action intent</h2></div>
-              <p>This demonstrates durable idempotency. External delivery remains deliberately disabled.</p>
+              <div><p class="section-kicker">Step 4</p><h2 id="action-heading">Prepare action for review</h2></div>
+              <p>Record a proposed action only. External delivery remains deliberately disabled.</p>
             </div>
             <div class="action-layout">
               <form id="action-form" class="action-form">
+                <p class="proposal-status" id="proposal-status"></p>
                 <div class="form-field">
                   <label for="document-type">Document to request</label>
-                  <select id="document-type" name="document_type">
+                  <select id="document-type" name="document_type" disabled>
                     <option value="commercial_invoice">Commercial invoice</option>
                     <option value="certificate_of_origin">Certificate of origin</option>
                     <option value="packing_list">Packing list</option>
@@ -153,20 +155,21 @@
                 </div>
                 <div class="form-field">
                   <label for="action-reason">Business reason</label>
-                  <textarea id="action-reason" name="reason" rows="4" maxlength="1000" required></textarea>
+                  <textarea id="action-reason" name="reason" rows="4" maxlength="1000" required readonly></textarea>
                 </div>
                 <div class="form-actions">
-                  <button class="button button-primary" id="record-action-button" type="submit">Record action intent</button>
-                  <button class="button button-secondary" id="replay-action-button" type="button" hidden>Replay same request</button>
-                  <button class="button button-quiet" id="new-action-button" type="button" hidden>Start new request</button>
+                  <button class="button button-primary" id="record-action-button" type="submit">Record proposed action</button>
+                  <button class="button button-secondary" id="replay-action-button" type="button" hidden>Test retry safety</button>
+                  <button class="button button-quiet" id="new-action-button" type="button" hidden>Prepare new record</button>
                 </div>
               </form>
               <aside class="guardrail-card">
                 <p class="guardrail-title"><span aria-hidden="true">✓</span> Safety boundary</p>
                 <ul>
                   <li>Validates the current exception and linked records</li>
-                  <li>Stores one immutable intent under an idempotency key</li>
+                  <li>Stores one durable local record under an idempotency key</li>
                   <li>Does not email, approve, dispatch, or update ERP</li>
+                  <li>Human approval and execution exist only in the target architecture</li>
                 </ul>
               </aside>
             </div>

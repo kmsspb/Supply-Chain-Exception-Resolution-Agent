@@ -15,6 +15,41 @@ class ExceptionStatus(str, Enum):
     RESOLVED = "resolved"
 
 
+class DocumentType(str, Enum):
+    COMMERCIAL_INVOICE = "commercial_invoice"
+    CERTIFICATE_OF_ORIGIN = "certificate_of_origin"
+    PACKING_LIST = "packing_list"
+    OTHER = "other"
+
+
+class ProposedActionType(str, Enum):
+    REQUEST_DOCUMENT = "request_document"
+    MANUAL_INVESTIGATION = "manual_investigation"
+    MONITOR_SHIPMENT = "monitor_shipment"
+
+
+class ActionTarget(str, Enum):
+    DOCUMENT_REQUEST_WORKFLOW = "document_request_workflow"
+    LOGISTICS_OPERATIONS = "logistics_operations"
+    SHIPMENT_MONITORING = "shipment_monitoring"
+
+
+class ExecutionMode(str, Enum):
+    RECORD_ONLY = "record_only"
+
+
+class ActionProposal(BaseModel):
+    """Typed advisory proposal. It is not an approval or execution instruction."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    action_type: ProposedActionType
+    document_type: DocumentType | None
+    target_system: ActionTarget
+    requires_approval: bool
+    execution_mode: ExecutionMode
+    supported: bool
+
+
 class EvidenceItem(BaseModel):
     model_config = ConfigDict(frozen=True)
     evidence_id: str
@@ -33,6 +68,7 @@ class ResolutionRecommendation(BaseModel):
     confidence: float = Field(ge=0, le=1)
     risk_level: RiskLevel
     human_approval_required: bool
+    action_proposal: ActionProposal
     evidence: list[EvidenceItem]
     cause_evidence_ids: list[str]
     action_evidence_ids: list[str]
@@ -48,6 +84,7 @@ class ProviderRecommendation(BaseModel):
     confidence: float
     risk_level: RiskLevel
     human_approval_required: bool
+    action_proposal: ActionProposal
     cause_evidence_ids: list[str]
     action_evidence_ids: list[str]
 
@@ -79,13 +116,6 @@ class AuditEvent(BaseModel):
     event_type: str
     exception_id: str
     details: dict[str, Any]
-
-
-class DocumentType(str, Enum):
-    COMMERCIAL_INVOICE = "commercial_invoice"
-    CERTIFICATE_OF_ORIGIN = "certificate_of_origin"
-    PACKING_LIST = "packing_list"
-    OTHER = "other"
 
 
 class RequestDocumentInput(BaseModel):
