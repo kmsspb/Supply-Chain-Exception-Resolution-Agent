@@ -153,5 +153,6 @@ cost arithmetic, incomplete coverage, identical provider inputs, report hashes, 
 Unit-test judgements are explicitly synthetic; generated baseline reports remain pending review.
 Live Azure runs require deployment configuration and are reported separately from mocked tests.
 
-The API remains recommendation-only. Read/write integration patterns, identity and enforced
-approval, immutable audit, and deployment infrastructure remain v0.4–v0.6 work.
+Evaluation remains outside the production request path. v0.4 adds typed read connectors, MCP access,
+and a local action-intent journal without changing the fixed reasoners or dataset. Identity, enforced
+approval, external delivery, immutable audit, and deployment infrastructure remain v0.5–v0.6 work.

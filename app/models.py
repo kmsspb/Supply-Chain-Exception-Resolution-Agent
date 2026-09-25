@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import Any
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class RiskLevel(str, Enum):
@@ -79,3 +79,37 @@ class AuditEvent(BaseModel):
     event_type: str
     exception_id: str
     details: dict[str, Any]
+
+
+class DocumentType(str, Enum):
+    COMMERCIAL_INVOICE = "commercial_invoice"
+    CERTIFICATE_OF_ORIGIN = "certificate_of_origin"
+    PACKING_LIST = "packing_list"
+    OTHER = "other"
+
+
+class RequestDocumentInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    exception_id: str = Field(min_length=1)
+    document_type: DocumentType
+    reason: str = Field(min_length=1, max_length=1000)
+
+    @field_validator("exception_id", "reason")
+    @classmethod
+    def nonblank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("must not be blank")
+        return value
+
+
+class ActionIntent(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    action_id: str
+    action_type: str
+    exception_id: str
+    order_id: str
+    shipment_id: str
+    document_type: DocumentType
+    reason: str
+    status: str
+    created_at: str

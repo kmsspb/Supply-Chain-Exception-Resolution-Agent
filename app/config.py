@@ -54,3 +54,77 @@ class Settings:
             or self.max_output_tokens <= 0
         ):
             raise ConfigurationError()
+
+
+def _positive_float(name: str, default: str) -> float:
+    try:
+        value = float(os.getenv(name, default))
+    except (ValueError, OverflowError):
+        raise ConfigurationError() from None
+    if not math.isfinite(value) or value <= 0:
+        raise ConfigurationError()
+    return value
+
+
+def _base_url(name: str) -> str:
+    value = os.getenv(name, "").strip().rstrip("/")
+    parsed = urlparse(value)
+    loopback = parsed.hostname in {"127.0.0.1", "localhost", "::1"}
+    if (
+        not value or parsed.scheme not in ({"http", "https"} if loopback else {"https"})
+        or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment
+    ):
+        raise ConfigurationError()
+    return value
+
+
+@dataclass(frozen=True)
+class ConnectorSettings:
+    mode: str = "fixture"
+    erp_base_url: str = ""
+    logistics_base_url: str = ""
+    connect_timeout: float = 2.0
+    read_timeout: float = 5.0
+    write_timeout: float = 5.0
+    pool_timeout: float = 2.0
+    attempts: int = 3
+    breaker_threshold: int = 5
+    breaker_open_seconds: float = 30.0
+
+    @classmethod
+    def from_env(cls) -> "ConnectorSettings":
+        load_dotenv(ROOT / ".env", override=False)
+        mode = os.getenv("CONNECTOR_MODE", "fixture").strip()
+        if mode == "fixture":
+            return cls()
+        if mode != "http":
+            raise ConfigurationError()
+        try:
+            settings = cls(
+                mode=mode,
+                erp_base_url=_base_url("ERP_BASE_URL"),
+                logistics_base_url=_base_url("LOGISTICS_BASE_URL"),
+                connect_timeout=_positive_float("CONNECTOR_CONNECT_TIMEOUT_SECONDS", "2"),
+                read_timeout=_positive_float("CONNECTOR_READ_TIMEOUT_SECONDS", "5"),
+                write_timeout=_positive_float("CONNECTOR_WRITE_TIMEOUT_SECONDS", "5"),
+                pool_timeout=_positive_float("CONNECTOR_POOL_TIMEOUT_SECONDS", "2"),
+                attempts=int(os.getenv("CONNECTOR_ATTEMPTS", "3")),
+                breaker_threshold=int(os.getenv("CONNECTOR_BREAKER_THRESHOLD", "5")),
+                breaker_open_seconds=_positive_float("CONNECTOR_BREAKER_OPEN_SECONDS", "30"),
+            )
+        except (ValueError, OverflowError):
+            raise ConfigurationError() from None
+        if settings.attempts <= 0 or settings.breaker_threshold <= 0:
+            raise ConfigurationError()
+        return settings
+
+
+@dataclass(frozen=True)
+class ActionSettings:
+    database_path: Path
+
+    @classmethod
+    def from_env(cls) -> "ActionSettings":
+        load_dotenv(ROOT / ".env", override=False)
+        raw = os.getenv("ACTION_DB_PATH", "").strip()
+        return cls(Path(raw) if raw else ROOT / ".runtime" / "actions.sqlite3")

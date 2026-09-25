@@ -3,9 +3,10 @@
 A portfolio demonstrator for hybrid enterprise automation: deterministic context collection,
 replaceable reasoning, evidence references, and traceable recommendations.
 
-**v0.3 is recommendation-only.** It offers the original deterministic baseline and a direct
-Azure OpenAI model integration. Neither provider changes ERP records, sends messages, approves
-actions, or resolves stored exception status. The approval flag is advisory.
+**v0.4 keeps reasoning advisory and adds an integration pattern.** It offers the original
+deterministic baseline and Azure OpenAI integration, typed fixture/HTTP connector adapters, a
+read-only MCP server, and durable recording of synthetic document-request intents. It does not
+send messages, call suppliers, mutate ERP data, approve actions, or resolve exception status.
 
 ## Scenario
 
@@ -47,6 +48,11 @@ $result | ConvertTo-Json -Depth 10
 Invoke-RestMethod "http://127.0.0.1:8000/exceptions/EX-001/audit?run_id=$($result.run_id)"
 ```
 
+Fixture connectors are also the default. To call enterprise-style HTTP APIs, set
+`CONNECTOR_MODE=http`, `ERP_BASE_URL`, and `LOGISTICS_BASE_URL`. Non-loopback URLs must use HTTPS.
+See [the integration guide](docs/INTEGRATIONS.md) for contracts, retries, circuit behavior, MCP,
+and the local action-intent journal.
+
 ## Enable Azure reasoning
 
 Copy `.env.example` to `.env`, then set:
@@ -80,6 +86,8 @@ baseline fallback. Secrets stay out of source control; do not place real keys in
 | `GET /health` | Process health; does not probe Azure |
 | `POST /exceptions/{exception_id}/resolve` | Collect context and return a recommendation |
 | `GET /exceptions/{exception_id}/audit?run_id=...` | Retrieve events for an exception, optionally one run |
+| `POST /actions/request-document` | Validate linked records and durably record an idempotent action intent |
+| `GET /actions/{action_id}` | Retrieve one recorded action intent |
 
 All original recommendation fields remain. Responses add `run_id`, `provider`,
 `cause_evidence_ids`, and `action_evidence_ids`; each evidence item adds `evidence_id`.
@@ -96,11 +104,30 @@ Handled errors use:
 | 422 | Required supporting record is unavailable |
 | 500 | Corrupt local data or unexpected internal failure |
 | 502 | Invalid output/citations, model refusal, or incomplete model response |
-| 503 | Provider unavailable, including authentication and throttling failures |
-| 504 | Provider timeout |
+| 503 | Provider or connector unavailable; connector circuit open |
+| 504 | Provider or connector timeout |
 
-Recommendations do not mutate business state. Calling resolve again creates a new analysis run.
-There is no approval endpoint, exception intake endpoint, or action executor.
+Connector bad responses use 502. Action requests require an `Idempotency-Key` of 8–128 visible
+ASCII characters: missing/malformed keys use 400 and payload conflicts use 409.
+
+Recommendations do not mutate business state. The document-request route writes only an immutable
+local SQLite intent with status `recorded`; it performs no external delivery. There is no approval
+endpoint, exception intake endpoint, or action executor.
+
+## MCP read tools
+
+Run the standalone official-SDK server over stdio (default), or Streamable HTTP on loopback only:
+
+```powershell
+python -m app.mcp_server
+python -m app.mcp_server --transport http --host 127.0.0.1 --port 8001
+python -m app.mcp_smoke --transport in-process
+python -m app.mcp_smoke --transport stdio
+```
+
+It exposes `get_erp_order`, `get_logistics_status`, and `get_shipment_note` with structured output
+and read-only/idempotent annotations. Annotations are descriptive hints, not authorization.
+The Azure reasoner does not call MCP in v0.4; deterministic orchestration still gathers context.
 
 ## Compare providers
 
@@ -163,8 +190,9 @@ Only validated recommendations are stored as recommendation events. Raw SDK erro
 credentials, request headers, and hidden model reasoning are excluded.
 
 The prompt lives in `app/prompts/resolution_v1.txt`. Its hash identifies the exact text, while
-context snapshots identify the evidence supplied. Connector events describe calls made by the
-orchestrator; the model does not invoke tools.
+context snapshots identify the evidence supplied. HTTP connector events include attempts, sanitized
+status codes, retry delays, durations, and circuit transitions. Connector events describe orchestrator
+calls; the model does not invoke tools.
 
 **Traces are process-local, unauthenticated, and not immutable.** Restarting loses them; workers
 have separate stores; memory usage grows with runs. This is a synthetic-data local demo, not a
@@ -177,8 +205,9 @@ python -m pytest tests -q
 ```
 
 Offline tests use mocked HTTP transport with the real OpenAI SDK. They cover parsing, the Azure
-schema subset, local validation, provider failures, safe errors, configuration, API compatibility,
-trace correlation/concurrency, comparison compatibility, and evaluation calculations/review validation.
+schema subset, connector retries/timeouts/circuits, MCP transports, durable idempotency, safe errors,
+configuration, API compatibility, trace correlation/concurrency, comparison compatibility, and
+evaluation calculations/review validation.
 They require no Azure credentials. Live verification is separate: configure Azure, resolve
 `EX-001`, then run the 30-case evaluation and review its outputs. Mocked tests do not measure model quality.
 
@@ -186,7 +215,7 @@ They require no Azure credentials. Live verification is separate: configure Azur
 
 - **v0.2:** Direct Azure reasoning, structured output, evidence reference validation, prompt/connector tracing, small baseline comparisons.
 - **v0.3:** 30 evaluation cases; classification, human-reviewed action/claim/escalation scoring, latency, token/cost estimates with coverage.
-- **v0.4:** Enterprise tool exposure, MCP exploration, retries/timeouts/circuit breakers, action idempotency.
+- **v0.4:** Typed fixture/HTTP enterprise tools, read-only MCP access, retries/timeouts/circuit breakers, and durable idempotent action intents.
 - **v0.5:** Entra ID, agent identity and least privilege, read/write separation, enforced approval policies, immutable audit.
 - **v0.6:** CI/CD, containers, deployment configuration/secrets management, deployment architecture.
 

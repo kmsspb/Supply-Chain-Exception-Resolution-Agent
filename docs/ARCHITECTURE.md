@@ -1,4 +1,4 @@
-# Architecture — v0.3
+# Architecture — v0.4
 
 ## Implemented request flow
 
@@ -6,7 +6,7 @@
 POST /exceptions/{id}/resolve
   -> create UUID run trace
   -> load local exception
-  -> read ERP order, shipment, and carrier note sequentially
+  -> EnterpriseToolService reads ERP order, shipment, and carrier note sequentially
   -> validate required record shape/relationships and build canonical evidence
   -> selected Reasoner.resolve(ReasoningContext)
        RuleBasedReasoner | AzureOpenAIReasoner
@@ -15,15 +15,16 @@ POST /exceptions/{id}/resolve
   -> terminal success/failure trace
 ```
 
-FastAPI creates the selected provider during application lifespan startup. Configuration is
+FastAPI creates the selected provider and connector bundle during application lifespan startup. Configuration is
 loaded from environment variables and an optional repository-root .env; environment values win.
 The default baseline needs no Azure configuration. SDK clients owned by the application are
-closed at shutdown. Tests can inject a reasoner using the application factory.
+closed at shutdown. Tests can inject a reasoner, tool service, and action store using the application factory.
 
 ## Contracts and responsibility
 
-- **Repository/tools:** fixed local JSON sources behind narrow read-only functions. Missing records
-  and corrupt data have distinct typed errors. There is no HTTP ERP integration or detector.
+- **Connectors:** typed `ERPConnector` and `LogisticsConnector` protocols have fixture and HTTP
+  implementations. `EnterpriseToolService` is the single contract used by the orchestrator, MCP,
+  and action validation. HTTP responses use strict Pydantic records and relationship checks.
 - **Context:** the service collects all records before reasoning. It validates required string
   fields and ID relationships; this is not a complete enterprise domain schema.
 - **Evidence:** stable IDs such as `erp:SO-1001`, `logistics:SHP-9001`, and `note:NOTE-7001`.
@@ -36,8 +37,8 @@ closed at shutdown. Tests can inject a reasoner using the application factory.
 - **Validation:** provider transport schema is separate from domain constraints. Validate finite
   confidence in [0,1], nonblank category/summary/action, nonempty cause/action citations, and
   membership in the supplied catalogue. Public facts are hydrated from that catalogue.
-- **Approval:** flags and suggested actions are advisory. No authorization decision, workflow
-  transition, approval persistence, message sending, or ERP mutation is implemented.
+- **Action intent:** `request_document` is an immutable SQLite record with status `recorded` and
+  REST idempotency. It is neither approval nor delivery. No message sending or ERP mutation occurs.
 
 Reference integrity does not establish semantic entailment. Even a valid response can misinterpret
 facts or recommend an unsuitable action. Evaluation uses human review to assess unsupported
@@ -52,8 +53,24 @@ failures return a sanitized 500. Handled analysis failures include a run ID in b
 and a terminal trace event. Configuration errors prevent Azure-mode startup.
 
 Azure has a configurable SDK timeout and output limit, with zero automatic SDK retries. There is
-no fallback to baseline. General connector resilience/circuit breakers remain v0.4 work.
+no fallback to baseline. HTTP reads make three total attempts for transport/timeouts and selected
+status codes, honor bounded `Retry-After`, and use exponential full jitter. ERP and logistics have
+independent thread-safe process-local breakers: five failed logical calls open a breaker for 30
+seconds, then one half-open probe is admitted. A 404 maps to missing evidence and does not count.
 Raw upstream error text is neither returned nor saved in traces.
+
+## MCP and action-intent paths
+
+The standalone MCP SDK v2 server exposes the same three read tools with Pydantic output. It supports
+stdio and loopback-only Streamable HTTP at `/mcp`. Tool annotations describe read-only, non-destructive,
+idempotent, open-world calls; authorization must not rely on these hints. The Azure model is not an
+MCP client in this version.
+
+`POST /actions/request-document` first checks the idempotency journal. A matching prior request is
+returned without revalidating connectors. A new key triggers linked exception/order/shipment
+collection, then an atomic SQLite transaction inserts one row under a unique action-type/key-hash
+constraint. WAL and a busy timeout support local concurrency. The raw key is never stored. A key reused
+with another canonical payload returns 409. Failed validation inserts nothing.
 
 ## Traces and comparisons
 
@@ -95,7 +112,6 @@ or provide immutable audit guarantees.
 
 ## Future boundaries
 
-v0.4 introduces enterprise tool access,
-MCP exploration and action resilience. v0.5 provides identity, enforced write approvals and
+v0.5 provides Entra identity, remote MCP OAuth, enforced write approvals, external dispatch and
 immutable audit. v0.6 covers delivery infrastructure. These stages must preserve the separation
 between reasoning and authorized deterministic execution.

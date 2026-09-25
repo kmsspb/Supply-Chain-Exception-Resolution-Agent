@@ -4,7 +4,8 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 from fastapi.testclient import TestClient
 
-from app import repository, tools
+from app import repository
+from app.connectors.fixture import FixtureERPConnector
 from app.audit import get_events
 from app.errors import (
     ConfigurationError, CorruptData, ExceptionNotFound, InvalidProviderOutput,
@@ -38,7 +39,7 @@ def test_existing_routes_and_run_filter():
         assert completed == ["get_erp_order", "get_logistics_status", "get_shipment_note"]
         assert all("elapsed_ms" in event["details"] for event in events if event["event_type"] == "connector_completed")
         schema = client.get("/openapi.json").json()
-        assert schema["info"]["version"] == "0.3.0"
+        assert schema["info"]["version"] == "0.4.0"
         assert "ResolutionRecommendation" in schema["paths"]["/exceptions/{exception_id}/resolve"]["post"]["responses"]["200"]["content"]["application/json"]["schema"]["$ref"]
 
 
@@ -107,7 +108,7 @@ def test_unexpected_connector_error_is_sanitized(monkeypatch):
     def broken(record_id):
         raise RuntimeError("SECRET-from-connector")
 
-    monkeypatch.setattr(tools, "get_erp_order", broken)
+    monkeypatch.setattr(FixtureERPConnector, "get_order", lambda self, record_id, emit=None: broken(record_id))
     with TestClient(create_app(RuleBasedReasoner())) as client:
         response = client.post("/exceptions/EX-001/resolve")
     assert response.status_code == 500
