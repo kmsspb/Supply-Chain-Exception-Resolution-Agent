@@ -191,85 +191,241 @@
 
     <section id="architecture-panel" class="tab-panel architecture-panel" role="tabpanel" aria-labelledby="architecture-tab" hidden>
       <div class="shell architecture-hero">
-        <p class="eyebrow">Architecture at a glance</p>
-        <h1>A controlled path from enterprise evidence to action.</h1>
-        <p>The same typed tool layer serves deterministic orchestration and read-only MCP access.
-          Reasoning proposes; application code validates and records.</p>
+        <p class="eyebrow">Architecture &amp; operating model</p>
+        <h1>One governed workflow. Three integration styles.</h1>
+        <p>APIs connect modern systems, RPA bridges legacy workflows, and agents interpret ambiguity.
+          The orchestrator brings them together while policy—not the model—controls execution.</p>
+        <div class="architecture-thesis" aria-label="Architecture principles">
+          <span>API for reliable access</span>
+          <span>RPA for legacy reach</span>
+          <span>Agents for judgement</span>
+          <span>Policy for authority</span>
+        </div>
       </div>
 
-      <div class="shell">
-        <section class="architecture-section" aria-labelledby="system-architecture-heading">
-          <div class="section-heading">
-            <div><p class="section-kicker">System view</p><h2 id="system-architecture-heading">Separation of responsibilities</h2></div>
+      <div class="shell architecture-content">
+        <section class="architecture-section" aria-labelledby="runtime-heading">
+          <div class="architecture-heading-row">
+            <div>
+              <p class="section-kicker">Current solution</p>
+              <h2 id="runtime-heading">What this demo actually runs</h2>
+            </div>
+            <span class="delivery-status status-live">Implemented in v0.4</span>
           </div>
-          <div class="architecture-grid" role="img" aria-label="Architecture from user interface through API, orchestration, tools, reasoners, traces, and action journal">
-            <div class="architecture-column">
-              <span class="column-label">Experience</span>
-              <div class="architecture-node node-blue"><strong>Guided demo UI</strong><small>Business workflow</small></div>
-              <div class="architecture-node"><strong>MCP clients</strong><small>Read-only experiment</small></div>
-            </div>
-            <div class="architecture-arrow" aria-hidden="true">→</div>
-            <div class="architecture-column">
-              <span class="column-label">Application</span>
-              <div class="architecture-node node-teal"><strong>FastAPI contracts</strong><small>REST + MCP server</small></div>
-              <div class="architecture-node"><strong>Orchestrator</strong><small>Sequential context collection</small></div>
-            </div>
-            <div class="architecture-arrow" aria-hidden="true">→</div>
-            <div class="architecture-column">
-              <span class="column-label">Enterprise access</span>
-              <div class="architecture-node node-gold"><strong>EnterpriseToolService</strong><small>Shared typed contract</small></div>
-              <div class="architecture-node"><strong>ERP connector</strong><small>Fixture or resilient HTTP</small></div>
-              <div class="architecture-node"><strong>Logistics connector</strong><small>Fixture or resilient HTTP</small></div>
-            </div>
-            <div class="architecture-arrow" aria-hidden="true">→</div>
-            <div class="architecture-column">
-              <span class="column-label">Decide &amp; record</span>
-              <div class="architecture-node node-purple"><strong>Reasoner</strong><small>Rules or Azure OpenAI</small></div>
-              <div class="architecture-node"><strong>Evidence validation</strong><small>Reject unknown references</small></div>
-              <div class="architecture-node"><strong>Trace + SQLite</strong><small>Runs and action intents</small></div>
-            </div>
-          </div>
-        </section>
+          <p class="architecture-intro">The application collects context before reasoning, validates
+            every recommendation locally, and records an action intent without executing it.</p>
 
-        <section class="architecture-section" aria-labelledby="request-flow-heading">
-          <div class="section-heading">
-            <div><p class="section-kicker">Request flow</p><h2 id="request-flow-heading">From alert to controlled intent</h2></div>
+          <div class="runtime-stack" role="group" aria-label="Current solution layers from experience through orchestration, enterprise tools, reasoning, validation, and local state">
+            <article class="runtime-layer">
+              <div class="layer-label"><span>01</span><div><strong>Experience</strong><small>How people and clients enter</small></div></div>
+              <div class="layer-components">
+                <div><strong>Guided demo UI</strong><small>Business workflow</small></div>
+                <div><strong>REST API</strong><small>Stable application contracts</small></div>
+                <div><strong>Read-only MCP</strong><small>Standalone tool access</small></div>
+              </div>
+            </article>
+            <div class="stack-link" aria-hidden="true"><span></span></div>
+            <article class="runtime-layer featured-layer">
+              <div class="layer-label"><span>02</span><div><strong>Application control</strong><small>Owns the request flow</small></div></div>
+              <div class="layer-components">
+                <div><strong>FastAPI</strong><small>Validation and error mapping</small></div>
+                <div class="primary-component"><strong>Orchestrator</strong><small>Sequential collection and run correlation</small></div>
+                <div><strong>Run trace</strong><small>Process-local observability</small></div>
+              </div>
+            </article>
+            <div class="stack-link" aria-hidden="true"><span></span></div>
+            <article class="runtime-layer">
+              <div class="layer-label"><span>03</span><div><strong>Enterprise context</strong><small>Typed, deterministic reads</small></div></div>
+              <div class="layer-components">
+                <div class="primary-component"><strong>EnterpriseToolService</strong><small>One shared tool contract</small></div>
+                <div><strong>ERP connector</strong><small>Fixture or resilient HTTP</small></div>
+                <div><strong>Logistics connector</strong><small>Status and notes</small></div>
+              </div>
+            </article>
+            <div class="stack-link" aria-hidden="true"><span></span></div>
+            <article class="runtime-layer">
+              <div class="layer-label"><span>04</span><div><strong>Reason &amp; validate</strong><small>Advisory intelligence</small></div></div>
+              <div class="layer-components">
+                <div><strong>Rule-based baseline</strong><small>Deterministic benchmark</small></div>
+                <div class="agent-component"><strong>Azure OpenAI</strong><small>Replaceable reasoner</small></div>
+                <div><strong>Evidence validator</strong><small>Schema and citation checks</small></div>
+              </div>
+            </article>
+            <div class="stack-link" aria-hidden="true"><span></span></div>
+            <article class="runtime-layer">
+              <div class="layer-label"><span>05</span><div><strong>Record safely</strong><small>No external side effect</small></div></div>
+              <div class="layer-components two-components">
+                <div><strong>Validated recommendation</strong><small>Evidence-linked advisory output</small></div>
+                <div><strong>SQLite action intent</strong><small>Idempotent status: recorded</small></div>
+              </div>
+            </article>
           </div>
-          <ol class="flow-list">
-            <li><span>01</span><div><strong>Receive exception</strong><p>A known exception ID starts a correlated run.</p></div></li>
-            <li><span>02</span><div><strong>Collect evidence</strong><p>ERP, shipment, and note records are fetched sequentially.</p></div></li>
-            <li><span>03</span><div><strong>Reason</strong><p>The selected provider receives one canonical context snapshot.</p></div></li>
-            <li><span>04</span><div><strong>Validate</strong><p>Schema, confidence, and evidence references are checked locally.</p></div></li>
-            <li><span>05</span><div><strong>Recommend</strong><p>The user sees a grounded, advisory next step.</p></div></li>
-            <li><span>06</span><div><strong>Record intent</strong><p>SQLite stores one idempotent record; nothing is dispatched.</p></div></li>
+
+          <ol class="runtime-sequence" aria-label="Implemented runtime sequence">
+            <li><span>1</span>Receive exception</li>
+            <li><span>2</span>Gather ERP + logistics</li>
+            <li><span>3</span>Build canonical context</li>
+            <li><span>4</span>Reason + validate</li>
+            <li><span>5</span>Recommend + record intent</li>
           </ol>
         </section>
 
-        <section class="architecture-section" aria-labelledby="production-path-heading">
-          <div class="section-heading">
-            <div><p class="section-kicker">Evolution path</p><h2 id="production-path-heading">Demo today, production integration tomorrow</h2></div>
+        <section class="architecture-section target-section" aria-labelledby="target-process-heading">
+          <div class="architecture-heading-row">
+            <div>
+              <p class="section-kicker">Target operating process</p>
+              <h2 id="target-process-heading">From detected exception to governed execution</h2>
+            </div>
+            <span class="delivery-status status-target">Enterprise target</span>
           </div>
-          <div class="comparison-grid">
+          <p class="architecture-intro">The target extends today’s grounded recommendation with a
+            policy decision, human approval for material risk, deterministic execution, and durable monitoring.</p>
+
+          <div class="process-rail" role="group" aria-label="Target process from detection through understanding, resolution, governance, execution, and monitoring">
+            <article class="process-stage future-stage">
+              <header><span>01</span><small>Detect</small></header>
+              <h3>Exception enters the workflow</h3>
+              <p>API event, monitoring rule, or RPA trigger identifies a supply-chain exception.</p>
+              <span class="stage-status">Future intake</span>
+            </article>
+            <div class="rail-arrow" aria-hidden="true">→</div>
+            <article class="process-stage current-stage">
+              <header><span>02</span><small>Understand</small></header>
+              <h3>Orchestrator gathers verified context</h3>
+              <div class="stage-chips"><span>ERP</span><span>Logistics</span><span>Notes</span></div>
+              <p>Typed records become one canonical context package.</p>
+              <span class="stage-status">Demonstrated now</span>
+            </article>
+            <div class="rail-arrow" aria-hidden="true">→</div>
+            <article class="process-stage current-stage">
+              <header><span>03</span><small>Resolve</small></header>
+              <h3>Resolution agent proposes</h3>
+              <p>Structured reasoning returns a root cause, recommendation, confidence, and evidence references.</p>
+              <span class="stage-status">Demonstrated now</span>
+            </article>
+            <div class="rail-arrow" aria-hidden="true">→</div>
+            <article class="process-stage policy-stage">
+              <header><span>04</span><small>Govern</small></header>
+              <h3>Policy engine decides the route</h3>
+              <div class="decision-routes">
+                <div><span>Low risk</span><strong>Automate</strong></div>
+                <div><span>High risk</span><strong>Human approval</strong></div>
+              </div>
+              <span class="stage-status">Future control</span>
+            </article>
+            <div class="rail-arrow" aria-hidden="true">→</div>
+            <article class="process-stage future-stage">
+              <header><span>05</span><small>Act &amp; observe</small></header>
+              <h3>Approved handlers execute</h3>
+              <div class="stage-chips"><span>API action</span><span>RPA action</span></div>
+              <p>Every side effect produces immutable audit and operational monitoring.</p>
+              <span class="stage-status">Future execution</span>
+            </article>
+          </div>
+
+          <div class="authority-boundary">
+            <span aria-hidden="true">✓</span>
+            <p><strong>Authority boundary:</strong> the agent never decides its own permission to act.
+              Policy evaluates the proposed action; approved deterministic API or RPA handlers execute it.</p>
+          </div>
+        </section>
+
+        <section id="enterprise-architecture" class="architecture-section enterprise-section" aria-labelledby="portfolio-heading">
+          <div class="architecture-heading-row">
+            <div>
+              <p class="section-kicker">Enterprise portfolio architecture</p>
+              <h2 id="portfolio-heading">APIs, RPA, and agents working as one system</h2>
+            </div>
+            <span class="delivery-status status-hybrid">Hybrid by design</span>
+          </div>
+          <p class="architecture-intro">Each technology has a distinct job. All three feed the same
+            orchestrated process and share governance, identity, observability, and audit.</p>
+
+          <div class="enterprise-map" role="group" aria-label="Enterprise supply-chain architecture combining REST tools, RPA workers, and agent capabilities under orchestration, policy, approval, execution, and audit">
+            <div class="enterprise-domain">
+              <span class="domain-mark" aria-hidden="true">SC</span>
+              <div><small>Business domain</small><strong>Supply Chain Process</strong></div>
+            </div>
+
+            <div class="enterprise-access-grid">
+              <article class="access-lane api-lane">
+                <div class="lane-icon" aria-hidden="true">{ }</div>
+                <small>Modern platforms</small>
+                <h3>API systems</h3>
+                <div class="lane-divider"></div>
+                <strong>REST tools</strong>
+                <p>Typed, resilient access to ERP, logistics, and partner services.</p>
+              </article>
+              <article class="access-lane rpa-lane">
+                <div class="lane-icon" aria-hidden="true">▦</div>
+                <small>Legacy applications</small>
+                <h3>Desktop and legacy UI</h3>
+                <div class="lane-divider"></div>
+                <strong>RPA workers</strong>
+                <p>Deterministic interaction where a suitable API does not exist.</p>
+              </article>
+              <article class="access-lane agent-lane">
+                <div class="lane-icon" aria-hidden="true">◇</div>
+                <small>Unstructured information</small>
+                <h3>Notes, email, and documents</h3>
+                <div class="lane-divider"></div>
+                <strong>Agent capabilities</strong>
+                <p>Evidence-grounded interpretation of ambiguity and exceptions.</p>
+              </article>
+            </div>
+
+            <div class="convergence-line" aria-hidden="true"><span></span><span></span><span></span></div>
+            <div class="context-ribbon"><small>Shared contract</small><strong>Verified context + approved tool results</strong></div>
+            <div class="core-flow">
+              <article><small>Coordinate</small><strong>Orchestrator</strong><p>Owns state, sequence, retries, and correlation.</p></article>
+              <div class="core-arrow" aria-hidden="true">→</div>
+              <article class="core-agent"><small>Reason</small><strong>Resolution Agent</strong><p>Explains cause and proposes the next action.</p></article>
+              <div class="core-arrow" aria-hidden="true">→</div>
+              <article class="core-policy"><small>Authorize</small><strong>Policy + Human approval</strong><p>Applies risk rules and approval requirements.</p></article>
+            </div>
+            <div class="execution-band">
+              <div><small>Deterministic execution layer</small><strong>API action handlers</strong><span>Preferred for modern systems</span></div>
+              <div><small>Deterministic execution layer</small><strong>RPA action workers</strong><span>Used for governed legacy workflows</span></div>
+            </div>
+            <div class="assurance-band">
+              <strong>Identity · least privilege · immutable audit · monitoring · replay protection</strong>
+              <small>Cross-cutting enterprise controls</small>
+            </div>
+          </div>
+
+          <div class="responsibility-grid">
+            <article><span class="responsibility-tag api-tag">API</span><strong>System access</strong><p>Reliable contracts for high-volume reads and approved writes.</p></article>
+            <article><span class="responsibility-tag rpa-tag">RPA</span><strong>Legacy reach</strong><p>Repeatable UI automation behind the same policy and audit controls.</p></article>
+            <article><span class="responsibility-tag agent-tag">Agent</span><strong>Operational judgement</strong><p>Reason over evidence and uncertainty; propose rather than authorize.</p></article>
+            <article><span class="responsibility-tag policy-tag">Policy</span><strong>Decision authority</strong><p>Determine whether automation is allowed or human approval is required.</p></article>
+          </div>
+        </section>
+
+        <section class="architecture-section delivery-section" aria-labelledby="production-path-heading">
+          <div class="architecture-heading-row">
+            <div><p class="section-kicker">Delivery boundary</p><h2 id="production-path-heading">What is real now, and what comes next</h2></div>
+          </div>
+          <div class="delivery-grid">
             <article>
-              <span class="comparison-label today">Demo today</span>
+              <span class="delivery-status status-live">Demo today</span>
               <h3>Safe, local, and inspectable</h3>
               <ul>
-                <li>Synthetic fixture records by default</li>
-                <li>Local SQLite action-intent journal</li>
-                <li>Process-local trace history</li>
-                <li>Advisory approval flag</li>
+                <li>Fixture or HTTP read connectors</li>
+                <li>Rule-based or Azure reasoning</li>
+                <li>Evidence validation and correlated traces</li>
+                <li>Local, idempotent action-intent journal</li>
                 <li>No external business side effects</li>
               </ul>
             </article>
             <article>
-              <span class="comparison-label future">Production integration</span>
-              <h3>Enterprise-controlled execution</h3>
+              <span class="delivery-status status-target">Enterprise target</span>
+              <h3>Governed, identity-aware execution</h3>
               <ul>
-                <li>Authenticated ERP and logistics APIs</li>
-                <li>Entra ID and least-privilege agent identity</li>
-                <li>Remote MCP OAuth and strict tool allowlists</li>
-                <li>Enforced human approval policy</li>
-                <li>Durable audit and deterministic dispatch</li>
+                <li>Entra ID and least-privilege workload identity</li>
+                <li>API-first integration plus governed RPA adapters</li>
+                <li>Remote MCP OAuth and tool allowlists</li>
+                <li>Enforced policy and human approvals</li>
+                <li>Durable audit, dispatch, and monitoring</li>
               </ul>
             </article>
           </div>

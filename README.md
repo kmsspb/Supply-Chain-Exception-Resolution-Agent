@@ -46,6 +46,7 @@ Python executable directly:
 
 The `/demo` page walks a nontechnical audience through evidence collection, recommendation,
 traceability, action-intent recording, idempotent replay, and the production integration path.
+Open `/demo?view=architecture` to present the target process and enterprise API/RPA/agent model directly.
 
 ```powershell
 curl.exe -X POST http://127.0.0.1:8000/exceptions/EX-001/resolve

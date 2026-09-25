@@ -15,7 +15,15 @@ def test_demo_page_and_local_assets_are_served():
     assert "Guided business demonstration" in page.text
     assert "Analyse exception" in page.text
     assert "Architecture &amp; real-world path" in page.text
-    assert "Demo today" in page.text and "Production integration" in page.text
+    assert "Demo today" in page.text and "Enterprise target" in page.text
+    assert "Target operating process" in page.text
+    assert "Policy engine decides the route" in page.text
+    assert "immutable audit" in page.text
+    assert "Authority boundary" in page.text
+    assert "APIs, RPA, and agents working as one system" in page.text
+    assert "REST tools" in page.text and "RPA workers" in page.text and "Agent capabilities" in page.text
+    assert "Human approval" in page.text and "Deterministic execution layer" in page.text
+    assert "API action handlers" in page.text and "RPA action workers" in page.text
     assert 'src="/demo/assets/app.js"' in page.text
     assert 'href="/demo/assets/styles.css"' in page.text
     assert "http://" not in page.text and "https://" not in page.text

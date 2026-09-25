@@ -103,7 +103,7 @@ async function loadSystemStatus() {
   }
 }
 
-function selectTab(selectedTab) {
+function selectTab(selectedTab, moveFocus = true) {
   const tabs = [byId("workflow-tab"), byId("architecture-tab")];
   for (const tab of tabs) {
     const selected = tab === selectedTab;
@@ -111,7 +111,7 @@ function selectTab(selectedTab) {
     tab.tabIndex = selected ? 0 : -1;
     byId(tab.getAttribute("aria-controls")).hidden = !selected;
   }
-  selectedTab.focus();
+  if (moveFocus) selectedTab.focus();
 }
 
 function configureTabs() {
@@ -504,4 +504,7 @@ document.addEventListener("DOMContentLoaded", () => {
   configureActions();
   resetWorkflow();
   loadSystemStatus();
+  if (new URLSearchParams(window.location.search).get("view") === "architecture") {
+    selectTab(byId("architecture-tab"), false);
+  }
 });

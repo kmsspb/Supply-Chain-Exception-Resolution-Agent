@@ -3,6 +3,9 @@
 The application also serves a dependency-free guided business interface at `/demo`. It calls the
 same REST contracts described below and includes a presentation-oriented architecture view. Its
 status endpoint exposes only the application version and safe provider/connector/action mode labels.
+The architecture view also separates the implemented recommendation flow from a future enterprise
+target: API tools, RPA workers, and agent capabilities converge through orchestration, policy,
+human approval, controlled execution, and durable audit/monitoring.
 
 ## Implemented request flow
 
